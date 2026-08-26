@@ -69,9 +69,55 @@ export const useStore = create((set, get) => ({
     }
   },
   
+  voiceLoginPatient: async (spokenText) => {
+    const allPatients = await db.patients.toArray();
+    if (!spokenText) return null;
+
+    // Clean up spoken phrase (e.g., "im ravi" -> "ravi", "this is ravi" -> "ravi")
+    const cleanedName = spokenText
+      .replace(/this is/gi, '')
+      .replace(/i am/gi, '')
+      .replace(/i'm/gi, '')
+      .replace(/\bim\b/gi, '')
+      .replace(/my name is/gi, '')
+      .replace(/hello/gi, '')
+      .replace(/hi/gi, '')
+      .replace(/it's/gi, '')
+      .replace(/\bits\b/gi, '')
+      .trim();
+
+    const targetSearch = cleanedName.length > 0 ? cleanedName : spokenText;
+
+    // 1. Search existing patient by name match
+    let matched = allPatients.find(p => 
+      p.name.toLowerCase().includes(targetSearch.toLowerCase()) ||
+      targetSearch.toLowerCase().includes(p.name.toLowerCase())
+    );
+
+    // 2. If new name spoken, dynamically create profile for them!
+    if (!matched && targetSearch.length > 0) {
+      const formattedName = targetSearch.charAt(0).toUpperCase() + targetSearch.slice(1);
+      const newId = await get().createNewPatient({
+        name: formattedName,
+        age: 72,
+        location: 'Assam, India',
+        interests: 'Memory Games, Music, Family',
+        family: 'Family Caregiver'
+      });
+      matched = await db.patients.get(newId);
+    }
+
+    if (matched) {
+      await get().loadPatientData(matched.patient_id);
+      return matched;
+    }
+    return null;
+  },
+
   refreshInsights: async (patientId) => {
     await InsightService.generateInsights(patientId);
     const insights = await InsightService.getRecentInsights(patientId);
-    set({ insights });
+    const alerts = await InsightService.checkAndGenerateAlerts(patientId);
+    set({ insights, alerts });
   }
 }));

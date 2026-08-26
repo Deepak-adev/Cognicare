@@ -95,6 +95,8 @@ function CaregiverStack() {
   );
 }
 
+import { VoicePatientLoginScreen } from './src/pages/VoicePatientLoginScreen';
+
 export default function App() {
   const { loadPatientData, patient, seedMockDataIfEmpty } = useStore();
   const [isInitializing, setIsInitializing] = useState(true);
@@ -118,8 +120,7 @@ export default function App() {
     <NavigationContainer>
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
-        <Stack.Screen name="PatientLogin" component={CaregiverPatientListScreen} /> 
-        {/* We reuse the PatientList for Patient login so they can select who they are! */}
+        <Stack.Screen name="PatientLogin" component={VoicePatientLoginScreen} /> 
         <Stack.Screen name="CaregiverStack" component={CaregiverStack} />
         <Stack.Screen name="PatientStack" component={PatientStack} />
       </Stack.Navigator>
