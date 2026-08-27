@@ -1,8 +1,10 @@
 {
-  "android": {
-    "package": "com.anonymous.sih"
-  },
-  "plugins": [
-    "expo-asset"
-  ]
+  "expo": {
+    "name": "sih",
+    "slug": "sih",
+    "version": "1.0.0",
+    "android": {
+      "package": "com.anonymous.sih"
+    }
+  }
 }
