@@ -1,10 +1,11 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, TextInput, Keyboard } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, TextInput, Keyboard, Platform } from 'react-native';
 import { globalStyles, colors, Card, Button } from '../components/common';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../store/useStore';
 import { db } from '../db/db';
 import { Mic, MicOff, Volume2, CheckCircle2, Sparkles, UserCheck, ArrowLeft, ArrowRight, User } from 'lucide-react-native';
+import Voice from '@react-native-voice/voice';
 
 export const VoicePatientLoginScreen = () => {
   const navigation = useNavigation();
@@ -30,12 +31,32 @@ export const VoicePatientLoginScreen = () => {
     console.log('==================================================');
     console.log('[VoiceLogin Diagnostics] Screen Mounted.');
     console.log('[VoiceLogin Diagnostics] Platform / Window check:', {
+      platformOS: Platform.OS,
       typeofWindow: typeof window,
       isWebSpeechSupported,
       hasSpeechRecognition: typeof window !== 'undefined' && 'SpeechRecognition' in window,
       hasWebkitSpeechRecognition: typeof window !== 'undefined' && 'webkitSpeechRecognition' in window,
     });
     console.log('==================================================');
+
+    // Register native Voice listeners if available
+    if (Voice && typeof Voice.onSpeechResults === 'function') {
+      Voice.onSpeechStart = () => {
+        console.log('[Voice Native] Speech recognition started via device mic');
+      };
+      Voice.onSpeechResults = (e) => {
+        if (e.value && e.value.length > 0) {
+          const spokenText = e.value[0];
+          console.log('[Voice Native] Recognized speech:', spokenText);
+          setTranscript(spokenText);
+          transcriptRef.current = spokenText;
+        }
+      };
+      Voice.onSpeechError = (e) => {
+        console.error('[Voice Native] Speech recognition error:', e.error);
+        setIsListening(false);
+      };
+    }
 
     const fetchPatients = async () => {
       try {
@@ -47,6 +68,12 @@ export const VoicePatientLoginScreen = () => {
       }
     };
     fetchPatients();
+
+    return () => {
+      if (Voice && typeof Voice.destroy === 'function') {
+        Voice.destroy().then(Voice.removeAllListeners);
+      }
+    };
   }, []);
 
   // Pulsing animation for mic button and waveform
@@ -102,16 +129,26 @@ export const VoicePatientLoginScreen = () => {
           recognitionRef.current.stop(); 
           console.log('[SpeechRec] recognition.stop() called successfully.');
         } catch (e) {
-          console.warn('[SpeechRec] Error stopping recognition:', e);
+          console.warn('[SpeechRec] Error stopping Web Speech recognition:', e);
         }
       }
+
+      if (Voice && typeof Voice.stop === 'function') {
+        try {
+          await Voice.stop();
+          console.log('[Voice Native] Voice.stop() executed');
+        } catch (e) {
+          console.warn('[Voice Native] Error stopping native Voice:', e);
+        }
+      }
+
       setIsListening(false);
       Keyboard.dismiss();
 
       let currentText = transcriptRef.current;
       console.log('[SpeechRec] Captured text on mic toggle stop:', JSON.stringify(currentText));
 
-      // Fallback for Mobile / Expo Go if no text was captured via Web Speech API
+      // Fallback for Mobile / Expo Go if no text was captured
       if (!currentText || currentText.trim().length === 0) {
         if (availablePatients.length > 0) {
           currentText = availablePatients[0].name; // Default to first available patient e.g. "Aunt Maya"
@@ -133,15 +170,7 @@ export const VoicePatientLoginScreen = () => {
       transcriptRef.current = '';
       setVerifiedPatient(null);
 
-      // Focus input field immediately on mobile so keyboard voice mic dictation opens
-      setTimeout(() => {
-        if (inputRef.current) {
-          console.log('[SpeechRec] Focusing text input field for keyboard voice dictation...');
-          inputRef.current.focus();
-        }
-      }, 150);
-
-      // If running on web browser, trigger Web Speech API
+      // Web Speech API execution path
       if (isWebSpeechSupported) {
         try {
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -201,10 +230,20 @@ export const VoicePatientLoginScreen = () => {
           console.log('[SpeechRec Web] Invoking recognition.start()...');
           recognition.start();
         } catch (err) {
-          console.error('[SpeechRec Error] Failed during Speech Recognition start:', err);
+          console.error('[SpeechRec Error] Failed during Web Speech Recognition start:', err);
         }
       } else {
-        console.warn('[SpeechRec Mobile] Web Speech API not present in Expo Go JS engine. Keyboard dictation active.');
+        // Native device mic via @react-native-voice/voice
+        try {
+          if (Voice && typeof Voice.start === 'function') {
+            console.log('[Voice Native] Starting native device mic speech recognition...');
+            await Voice.start('en-US');
+          } else {
+            console.warn('[SpeechRec Mobile] Native voice module unavailable in current environment.');
+          }
+        } catch (err) {
+          console.error('[Voice Native Error] Failed to start native voice recognition:', err);
+        }
       }
     }
   };
