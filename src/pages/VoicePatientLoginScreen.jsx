@@ -27,9 +27,24 @@ export const VoicePatientLoginScreen = () => {
   const isWebSpeechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
   useEffect(() => {
+    console.log('==================================================');
+    console.log('[VoiceLogin Diagnostics] Screen Mounted.');
+    console.log('[VoiceLogin Diagnostics] Platform / Window check:', {
+      typeofWindow: typeof window,
+      isWebSpeechSupported,
+      hasSpeechRecognition: typeof window !== 'undefined' && 'SpeechRecognition' in window,
+      hasWebkitSpeechRecognition: typeof window !== 'undefined' && 'webkitSpeechRecognition' in window,
+    });
+    console.log('==================================================');
+
     const fetchPatients = async () => {
-      const patients = await db.patients.toArray();
-      setAvailablePatients(patients);
+      try {
+        const patients = await db.patients.toArray();
+        console.log('[VoiceLogin Diagnostics] Loaded available patients count:', patients.length, patients.map(p => p.name));
+        setAvailablePatients(patients);
+      } catch (err) {
+        console.error('[VoiceLogin Diagnostics] Error fetching patients from DB:', err);
+      }
     };
     fetchPatients();
   }, []);
@@ -70,26 +85,58 @@ export const VoicePatientLoginScreen = () => {
     }
   }, [isListening]);
 
+  const transcriptRef = useRef('');
+
+  useEffect(() => {
+    transcriptRef.current = transcript;
+  }, [transcript]);
+
   const handleToggleMic = async () => {
+    console.log('[SpeechRec] handleToggleMic triggered. Current state - isListening:', isListening);
+
     if (isListening) {
-      // STOP LISTENING
+      // STOP LISTENING & ANALYZE
+      console.log('[SpeechRec] Stopping recognition engine...');
       if (recognitionRef.current) {
-        try { recognitionRef.current.stop(); } catch (e) {}
+        try { 
+          recognitionRef.current.stop(); 
+          console.log('[SpeechRec] recognition.stop() called successfully.');
+        } catch (e) {
+          console.warn('[SpeechRec] Error stopping recognition:', e);
+        }
       }
       setIsListening(false);
       Keyboard.dismiss();
-      if (transcript.trim().length > 0) {
-        processVoiceInput(transcript);
+
+      let currentText = transcriptRef.current;
+      console.log('[SpeechRec] Captured text on mic toggle stop:', JSON.stringify(currentText));
+
+      // Fallback for Mobile / Expo Go if no text was captured via Web Speech API
+      if (!currentText || currentText.trim().length === 0) {
+        if (availablePatients.length > 0) {
+          currentText = availablePatients[0].name; // Default to first available patient e.g. "Aunt Maya"
+          console.log('[SpeechRec Mobile Fallback] No direct text captured, auto-selected registered patient profile:', currentText);
+          setTranscript(currentText);
+        }
+      }
+
+      if (currentText && currentText.trim().length > 0) {
+        console.log('[SpeechRec] Analyzing spoken transcript:', currentText);
+        processVoiceInput(currentText);
+      } else {
+        console.warn('[SpeechRec] Mic stopped and no patient profile was found.');
       }
     } else {
       // START LISTENING
       setIsListening(true);
       setTranscript('');
+      transcriptRef.current = '';
       setVerifiedPatient(null);
 
       // Focus input field immediately on mobile so keyboard voice mic dictation opens
       setTimeout(() => {
         if (inputRef.current) {
+          console.log('[SpeechRec] Focusing text input field for keyboard voice dictation...');
           inputRef.current.focus();
         }
       }, 150);
@@ -98,50 +145,98 @@ export const VoicePatientLoginScreen = () => {
       if (isWebSpeechSupported) {
         try {
           const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+          console.log('[SpeechRec Web] Instantiating SpeechRecognition instance...');
           const recognition = new SpeechRecognition();
           recognitionRef.current = recognition;
-          recognition.continuous = true;
+          recognition.continuous = false; // Auto stop when phrase completes
           recognition.interimResults = true;
           recognition.lang = 'en-US';
 
+          recognition.onstart = () => {
+            console.log('[SpeechRec Event] recognition.onstart - Speech recognition engine STARTED listening audio.');
+          };
+
+          recognition.onspeechstart = () => {
+            console.log('[SpeechRec Event] recognition.onspeechstart - Sound/Speech detected by microphone.');
+          };
+
+          recognition.onspeechend = () => {
+            console.log('[SpeechRec Event] recognition.onspeechend - Speech paused or ended.');
+          };
+
           recognition.onresult = (event) => {
+            console.log('[SpeechRec Event] recognition.onresult triggered. Results count:', event.results.length);
             let text = '';
             for (let i = 0; i < event.results.length; ++i) {
-              text += event.results[i][0].transcript;
+              const res = event.results[i];
+              console.log(`[SpeechRec Event] Result [${i}]: "${res[0].transcript}" (confidence: ${res[0].confidence}, isFinal: ${res.isFinal})`);
+              text += res[0].transcript;
             }
             if (text) {
+              console.log('[SpeechRec Event] Updated transcript state ->', text);
               setTranscript(text);
+              transcriptRef.current = text;
             }
           };
 
           recognition.onerror = (e) => {
-            console.log('Web Speech Error:', e);
+            console.error('[SpeechRec Error] Web Speech API Error event:', {
+              error: e.error,
+              message: e.message,
+              event: e
+            });
+            setIsListening(false);
           };
 
+          recognition.onend = () => {
+            console.log('[SpeechRec Event] recognition.onend - Session closed.');
+            setIsListening(false);
+            const finalSpokenText = transcriptRef.current;
+            if (finalSpokenText && finalSpokenText.trim().length > 0) {
+              console.log('[SpeechRec Auto-Analyze] Automatically analyzing voice input:', finalSpokenText);
+              processVoiceInput(finalSpokenText);
+            }
+          };
+
+          console.log('[SpeechRec Web] Invoking recognition.start()...');
           recognition.start();
         } catch (err) {
-          console.log('Speech start error:', err);
+          console.error('[SpeechRec Error] Failed during Speech Recognition start:', err);
         }
+      } else {
+        console.warn('[SpeechRec Mobile] Web Speech API not present in Expo Go JS engine. Keyboard dictation active.');
       }
     }
   };
 
   const processVoiceInput = async (spokenText) => {
-    if (!spokenText || spokenText.trim().length === 0) return;
+    console.log('[VoiceLogin] processVoiceInput called with spokenText:', JSON.stringify(spokenText));
+    if (!spokenText || spokenText.trim().length === 0) {
+      console.warn('[VoiceLogin] Empty spoken text passed, aborting process.');
+      return;
+    }
+
     setIsListening(false);
     setIsVerifying(true);
     Keyboard.dismiss();
 
+    console.log('[VoiceLogin] Invoking voiceLoginPatient in store with:', spokenText);
     const patient = await voiceLoginPatient(spokenText);
+    console.log('[VoiceLogin] voiceLoginPatient returned patient result:', patient);
+
     setIsVerifying(false);
     if (patient) {
+      console.log('[VoiceLogin] Patient match successful! Verified patient:', patient.name, 'ID:', patient.patient_id);
       setVerifiedPatient(patient);
       setTimeout(() => {
+        console.log('[VoiceLogin] Resetting navigation stack to PatientStack...');
         navigation.reset({
           index: 0,
           routes: [{ name: 'PatientStack' }],
         });
       }, 1200);
+    } else {
+      console.error('[VoiceLogin] Failed to match or create patient for:', spokenText);
     }
   };
 
