@@ -13,16 +13,20 @@ import { FamiliarWorldScreen } from './src/pages/FamiliarWorldScreen';
 import { ProgressScreen } from './src/pages/ProgressScreen';
 import { ActivityScreen } from './src/pages/ActivityScreen';
 import { DemoScenario } from './src/pages/DemoScenario';
+import { MedicineReminderScreen } from './src/pages/MedicineReminderScreen';
 
 import { GamesScreen } from './src/pages/GamesScreen';
-import { LogOut, LayoutDashboard, Settings, Gamepad2 } from 'lucide-react-native';
+import { LogOut, LayoutDashboard, Settings, Gamepad2, Pill } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
 import { useStore } from './src/store/useStore';
+import { useTheme } from './src/hooks/useTheme';
 
 const Tab = createBottomTabNavigator();
 const Stack = createNativeStackNavigator();
 
 function PatientTabs({ navigation }) {
+  const { t } = useTheme();
+
   return (
     <Tab.Navigator
       screenOptions={{
@@ -47,7 +51,7 @@ function PatientTabs({ navigation }) {
         name="PatientHome" 
         component={PatientDashboard} 
         options={{
-          title: 'My Day',
+          title: t('myDay') || 'My Day',
           headerTitle: '',
           tabBarIcon: ({ color }) => <LayoutDashboard color={color} size={30} strokeWidth={2.5} />
         }}
@@ -56,18 +60,18 @@ function PatientTabs({ navigation }) {
         name="GamesTab" 
         component={GamesScreen} 
         options={{
-          title: 'Library',
-          headerTitle: 'Activity Library',
+          title: t('library') || 'Library',
+          headerTitle: t('activityLibrary') || 'Activity Library',
           tabBarIcon: ({ color }) => <Gamepad2 color={color} size={30} strokeWidth={2.5} />
         }}
       />
       <Tab.Screen 
-        name="Demo" 
-        component={DemoScenario} 
+        name="RemindersTab" 
+        component={MedicineReminderScreen} 
         options={{
-          title: 'Settings',
-          headerTitle: 'Settings',
-          tabBarIcon: ({ color }) => <Settings color={color} size={30} strokeWidth={2.5} />
+          title: t('reminders') || 'Reminders',
+          headerTitle: t('reminders') || 'Reminders',
+          tabBarIcon: ({ color }) => <Pill color={color} size={30} strokeWidth={2.5} />
         }}
       />
     </Tab.Navigator>
@@ -81,6 +85,7 @@ function PatientStack() {
       <Stack.Screen name="FamiliarWorld" component={FamiliarWorldScreen} options={{ headerShown: true, title: 'My World', headerBackTitle: 'Back' }} />
       <Stack.Screen name="Progress" component={ProgressScreen} options={{ headerShown: true, title: 'My Progress', headerBackTitle: 'Back' }} />
       <Stack.Screen name="Activity" component={ActivityScreen} options={{ headerShown: true, title: 'Activity', headerBackTitle: 'Back' }} />
+      <Stack.Screen name="MedicineReminder" component={MedicineReminderScreen} options={{ headerShown: false }} />
     </Stack.Navigator>
   );
 }

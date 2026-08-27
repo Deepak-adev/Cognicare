@@ -1,27 +1,24 @@
 import React from 'react';
 import { ScrollView, View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { useStore } from '../store/useStore';
-import { Card, Button, globalStyles, colors } from '../components/common';
+import { Card, Button, colors } from '../components/common';
+import { useTheme } from '../hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
 import { Play, Coffee, Pill, Activity, Utensils, Star, Globe, LogOut } from 'lucide-react-native';
 
 export const PatientDashboard = () => {
-  const { patient, loadPatientData } = useStore();
+  const { patient, loadPatientData, timelineTasks } = useStore();
   const navigation = useNavigation();
+  const { colors, globalStyles, settings, t, fontScale } = useTheme();
 
-  if (!patient) return <View style={globalStyles.container}><Text style={globalStyles.text}>Loading...</Text></View>;
+  if (!patient) return <View style={globalStyles.container}><Text style={globalStyles.text}>{t('loading')}</Text></View>;
 
   const handleExit = () => {
     // Navigate back to RoleSelection to change users
     navigation.reset({ index: 0, routes: [{ name: 'RoleSelection' }] });
   };
 
-  const journey = [
-    { time: '8:00 AM', title: 'Breakfast', icon: Coffee, done: true },
-    { time: '9:00 AM', title: 'Morning Medicine', icon: Pill, done: true },
-    { time: '10:00 AM', title: 'Cognitive Activity', icon: Activity, current: true },
-    { time: '1:00 PM', title: 'Lunch', icon: Utensils, done: false },
-  ];
+  const journey = timelineTasks;
 
   return (
     <View style={{ flex: 1, backgroundColor: colors.bgSubtle }}>
@@ -29,53 +26,72 @@ export const PatientDashboard = () => {
         
         <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
           <View>
-            <Text style={{ fontSize: 22, color: colors.textMuted, fontWeight: '700' }}>Good morning,</Text>
-            <Text style={[globalStyles.headerText, { fontSize: 40 }]}>{patient.name.split(' ')[0]} 👋</Text>
+            <Text style={{ fontSize: 22 * fontScale, color: colors.textMuted, fontWeight: '700' }}>{t('greeting')}</Text>
+            <Text style={[globalStyles.headerText, { fontSize: 40 * fontScale }]}>{patient.name.split(' ')[0]} 👋</Text>
           </View>
         </View>
 
         {/* Massive Hero Action */}
         <View style={{ marginBottom: 40 }}>
-          <Text style={{ fontSize: 20, color: colors.textMain, fontWeight: '600', marginBottom: 16 }}>
-            You have one activity today.
+          <Text style={{ fontSize: 20 * fontScale, color: colors.textMain, fontWeight: '600', marginBottom: 16 }}>
+            {t('oneActivity')}
           </Text>
           <Button 
             onPress={() => navigation.navigate('Activity')} 
             icon={Play}
             style={{ shadowColor: colors.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10 }}
           >
-            START TODAY'S ACTIVITY
+            <Text style={{ fontSize: 18 * fontScale, fontWeight: '800', color: '#ffffff', textTransform: 'uppercase' }}>
+              {t('startActivity')}
+            </Text>
           </Button>
         </View>
 
-        {/* New Navigation: World and Progress */}
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 }}>
-          <TouchableOpacity 
-            style={[styles.navCard, { backgroundColor: '#fff0f2' }]} 
-            onPress={() => navigation.navigate('FamiliarWorld')}
-          >
-            <Globe color="#f43f5e" size={36} style={{ marginBottom: 12 }} />
-            <Text style={styles.navCardText}>My World</Text>
-          </TouchableOpacity>
+        {/* New Navigation: World and Progress - Hidden if Simplified UI is enabled */}
+        {!settings.simplifiedUI && (
+          <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 40 }}>
+            <TouchableOpacity 
+              style={[styles.navCard, { backgroundColor: '#fff0f2' }]} 
+              onPress={() => navigation.navigate('FamiliarWorld')}
+            >
+              <Globe color="#f43f5e" size={36} style={{ marginBottom: 12 }} />
+              <Text style={[styles.navCardText, { fontSize: 20 * fontScale }]}>{t('myWorld')}</Text>
+            </TouchableOpacity>
 
-          <TouchableOpacity 
-            style={[styles.navCard, { backgroundColor: '#eff6ff' }]} 
-            onPress={() => navigation.navigate('Progress')}
-          >
-            <Star color="#3b82f6" size={36} style={{ marginBottom: 12 }} />
-            <Text style={styles.navCardText}>My Progress</Text>
-          </TouchableOpacity>
-        </View>
+            <TouchableOpacity 
+              style={[styles.navCard, { backgroundColor: '#eff6ff' }]} 
+              onPress={() => navigation.navigate('MedicineReminder')}
+            >
+              <Pill color="#3b82f6" size={36} style={{ marginBottom: 12 }} />
+              <Text style={[styles.navCardText, { fontSize: 20 * fontScale }]}>Reminders</Text>
+            </TouchableOpacity>
+          </View>
+        )}
 
         {/* Today's Journey */}
-        <Text style={[globalStyles.subHeaderText, { marginBottom: 20 }]}>Today's Journey</Text>
+        <Text style={[globalStyles.subHeaderText, { marginBottom: 20 }]}>{t('todaysJourney')}</Text>
         <Card style={{ padding: 24 }}>
           {journey.map((item, index) => {
             const isLast = index === journey.length - 1;
-            const Icon = item.icon;
+            
+            // Map string icon names to Lucide icons dynamically or fallback to a default
+            const IconComponent = {
+              'Coffee': Coffee,
+              'Pill': Pill,
+              'Activity': Activity,
+              'Star': Star,
+              'Utensils': Utensils
+            }[item.icon] || Star;
+            
+            const Wrapper = item.navigateTo ? TouchableOpacity : View;
             
             return (
-              <View key={index} style={{ flexDirection: 'row', marginBottom: isLast ? 0 : 24 }}>
+              <Wrapper 
+                key={index} 
+                style={{ flexDirection: 'row', marginBottom: isLast ? 0 : 24 }}
+                onPress={item.navigateTo ? () => navigation.navigate(item.navigateTo) : undefined}
+                activeOpacity={item.navigateTo ? 0.7 : 1}
+              >
                 {/* Timeline Line & Dot */}
                 <View style={{ alignItems: 'center', marginRight: 16 }}>
                   <View style={[styles.dot, item.done && styles.dotDone, item.current && styles.dotCurrent]} />
@@ -85,19 +101,19 @@ export const PatientDashboard = () => {
                 {/* Content */}
                 <View style={{ flex: 1, paddingBottom: isLast ? 0 : 16 }}>
                   <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
-                    <Text style={{ fontSize: 16, color: colors.textMuted, fontWeight: '700', width: 80 }}>{item.time}</Text>
-                    <Icon color={item.current ? colors.primary : colors.textMuted} size={20} style={{ marginRight: 8 }} />
-                    <Text style={[styles.journeyTitle, item.done && styles.journeyTitleDone, item.current && styles.journeyTitleCurrent]}>
+                    <Text style={{ fontSize: 16 * fontScale, color: colors.textMuted, fontWeight: '700', minWidth: 85, flexShrink: 0 }}>{item.time}</Text>
+                    <IconComponent color={item.current ? colors.primary : colors.textMuted} size={20} style={{ marginRight: 8, flexShrink: 0 }} />
+                    <Text style={[styles.journeyTitle, item.done && styles.journeyTitleDone, item.current && styles.journeyTitleCurrent, { fontSize: 22 * fontScale, flexShrink: 1 }]} numberOfLines={2}>
                       {item.title}
                     </Text>
                   </View>
                   {item.current && (
-                    <Text style={{ fontSize: 16, color: colors.primary, fontWeight: '600', marginLeft: 80 }}>
-                      Next up!
+                    <Text style={{ fontSize: 13 * fontScale, color: '#3b82f6', fontWeight: '700', marginTop: 4, marginLeft: 108 }}>
+                      {t('nextUp') || 'Next up!'}
                     </Text>
                   )}
                 </View>
-              </View>
+              </Wrapper>
             );
           })}
         </Card>

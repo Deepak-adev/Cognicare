@@ -1,40 +1,43 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView } from 'react-native';
-import { globalStyles, colors, Card, Button } from '../components/common';
+import { Card, Button, colors as defaultColors } from '../components/common';
 import { Play } from 'lucide-react-native';
+import { useTheme } from '../hooks/useTheme';
 
 export const ProgressScreen = () => {
+  const { t, fontScale, colors, globalStyles } = useTheme();
+
   return (
     <ScrollView style={[globalStyles.container, { backgroundColor: '#eff6ff' }]} showsVerticalScrollIndicator={false}>
       <View style={{ alignItems: 'center', marginVertical: 40 }}>
-        <Text style={{ fontSize: 70, marginBottom: 16 }}>🌟</Text>
+        <Text style={{ fontSize: 70 * fontScale, marginBottom: 16 }}>🌟</Text>
         <Text style={[globalStyles.headerText, { textAlign: 'center', color: colors.primary }]}>
-          You're doing well!
+          {t('doingWell') || "You're doing well!"}
         </Text>
-        <Text style={{ fontSize: 22, color: colors.textMain, fontWeight: '600', marginTop: 12 }}>
-          7 activities completed this week
+        <Text style={{ fontSize: 22 * fontScale, color: colors.textMain, fontWeight: '600', marginTop: 12 }}>
+          {t('activitiesCompleted') || "7 activities completed this week"}
         </Text>
       </View>
 
       <Card style={{ padding: 24, borderRadius: 30 }}>
         <View style={styles.skillRow}>
-          <Text style={styles.skillName}>Memory</Text>
-          <Text style={styles.stars}>⭐⭐⭐⭐☆</Text>
+          <Text style={[styles.skillName, { fontSize: 24 * fontScale }]}>{t('memory') || 'Memory'}</Text>
+          <Text style={{ fontSize: 24 * fontScale }}>⭐⭐⭐⭐☆</Text>
         </View>
         <View style={[styles.skillRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
-          <Text style={styles.skillName}>Attention</Text>
-          <Text style={styles.stars}>⭐⭐⭐☆☆</Text>
+          <Text style={[styles.skillName, { fontSize: 24 * fontScale }]}>{t('attention') || 'Attention'}</Text>
+          <Text style={{ fontSize: 24 * fontScale }}>⭐⭐⭐☆☆</Text>
         </View>
       </Card>
 
       <View style={styles.messageBox}>
-        <Text style={styles.messageText}>
-          "Keep going! You're doing a great job this week."
+        <Text style={[styles.messageText, { fontSize: 22 * fontScale }]}>
+          {t('keepGoing') || "Keep going! You're doing a great job this week."}
         </Text>
       </View>
 
       <Button icon={Play} variant="primary" style={{ marginTop: 24, borderRadius: 30, paddingVertical: 20 }}>
-        Hear my progress
+        <Text style={{ fontSize: 18 * fontScale, fontWeight: '800', color: '#ffffff' }}>{t('hearProgress') || "Hear my progress"}</Text>
       </Button>
 
     </ScrollView>
@@ -48,12 +51,12 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: colors.border
+    borderBottomColor: defaultColors.border
   },
   skillName: {
     fontSize: 24,
     fontWeight: '800',
-    color: colors.textMain
+    color: defaultColors.textMain
   },
   stars: {
     fontSize: 24
@@ -64,12 +67,12 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     marginTop: 24,
     borderWidth: 2,
-    borderColor: colors.primaryLight
+    borderColor: defaultColors.primaryLight
   },
   messageText: {
     fontSize: 22,
     fontStyle: 'italic',
-    color: colors.textMain,
+    color: defaultColors.textMain,
     textAlign: 'center',
     lineHeight: 32,
     fontWeight: '600'

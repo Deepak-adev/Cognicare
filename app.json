@@ -1,5 +1,8 @@
 {
   "android": {
     "package": "com.anonymous.sih"
-  }
+  },
+  "plugins": [
+    "expo-asset"
+  ]
 }

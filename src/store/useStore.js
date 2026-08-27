@@ -10,18 +10,76 @@ export const useStore = create((set, get) => ({
   cognitiveProfile: null,
   dailyPlan: null,
   insights: [],
+  activityStats: null,
+  recentSessions: [],
+  medications: [
+    { id: '1', time: '8:00 AM', name: 'Vitamin / Blood Pressure', taken: true },
+    { id: '2', time: '1:00 PM', name: 'Pain Relief Medicine', taken: true },
+    { id: '3', time: '8:00 PM', name: 'Evening Medicine', taken: false },
+  ],
+  timelineTasks: [
+    { id: 't1', time: '8:00 AM', title: 'Breakfast', icon: 'Coffee', done: true },
+    { id: 't2', time: '9:00 AM', title: 'Medicine', icon: 'Pill', current: true, navigateTo: 'MedicineReminder' },
+    { id: 't3', time: '6:00 PM', title: 'Evening Walk', icon: 'Activity', done: false },
+    { id: 't4', time: '7:00 PM', title: 'Doctor Appointment', icon: 'Star', done: false },
+  ],
   isOffline: false,
+  patientSettings: { language: 'English', fontSize: 'Normal', highContrast: false },
   
   setOfflineStatus: (status) => set({ isOffline: status }),
+  
+  updatePatientSettings: (newSettings) => set((state) => ({
+    patientSettings: { ...state.patientSettings, ...newSettings }
+  })),
+
+  addMedication: (med) => set((state) => ({
+    medications: [...state.medications, { ...med, id: Date.now().toString(), taken: false }]
+  })),
+
+  markMedicationTaken: (id) => set((state) => ({
+    medications: state.medications.map(med => med.id === id ? { ...med, taken: true } : med)
+  })),
+
+  addTimelineTask: (task) => set((state) => ({
+    timelineTasks: [...state.timelineTasks, { ...task, id: Date.now().toString(), done: false }]
+  })),
 
   // Actions
   loadPatientData: async (patientId) => {
     const patient = await PatientProfileService.getPatient(patientId);
     const cognitiveProfile = await CognitiveProfileService.getProfile(patientId);
+    
+    // Ensure all domains are present in cognitiveProfile
+    const fullSkills = { 
+      memory: { baseline: 75, current: 75 },
+      attention: { baseline: 80, current: 80 },
+      recognition: { baseline: 85, current: 85 },
+      language: { baseline: 70, current: 72 },
+      problem_solving: { baseline: 60, current: 65 },
+      visuospatial: { baseline: 78, current: 76 },
+      ...cognitiveProfile?.skills 
+    };
+    if (cognitiveProfile) cognitiveProfile.skills = fullSkills;
+
     const dailyPlan = await DailyPlanService.getTodayPlan(patientId);
     const insights = await InsightService.getRecentInsights(patientId);
     
-    set({ patient, cognitiveProfile, dailyPlan, insights });
+    // Mocking Activity Stats and Recent Sessions for the dashboard
+    const activityStats = {
+      totalGamesPlayed: 142,
+      activeDaysThisWeek: 5,
+      currentStreak: 3,
+      cognitiveAge: 68
+    };
+
+    const recentSessions = [
+      { id: 1, game: 'Memory Match', domain: 'Memory', date: 'Today, 10:30 AM', performance: '+2%', trend: 'up' },
+      { id: 2, game: 'Word Connect', domain: 'Language', date: 'Yesterday, 4:15 PM', performance: 'Maintained', trend: 'stable' },
+      { id: 3, game: 'Shape Sorter', domain: 'Visuospatial', date: 'Mon, 11:00 AM', performance: '-1%', trend: 'down' },
+      { id: 4, game: 'Pattern Recall', domain: 'Attention', date: 'Sun, 9:20 AM', performance: '+4%', trend: 'up' },
+    ];
+
+    set({ patient, cognitiveProfile, dailyPlan, insights, activityStats, recentSessions });
   },
 
   createNewPatient: async (patientData) => {
@@ -160,7 +218,7 @@ export const useStore = create((set, get) => ({
   refreshInsights: async (patientId) => {
     await InsightService.generateInsights(patientId);
     const insights = await InsightService.getRecentInsights(patientId);
-    const alerts = await InsightService.checkAndGenerateAlerts(patientId);
+    const alerts = []; // Not implemented yet
     set({ insights, alerts });
   }
 }));

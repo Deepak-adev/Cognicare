@@ -1,8 +1,9 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import { globalStyles, colors } from '../components/common';
 import { useNavigation } from '@react-navigation/native';
 import { Brain, Crosshair, Clock, MessageCircle } from 'lucide-react-native';
+import { useTheme } from '../hooks/useTheme';
+import { colors as defaultColors } from '../components/common';
 
 const GAME_CATEGORIES = [
   {
@@ -69,6 +70,7 @@ const GAME_CATEGORIES = [
 
 export const GamesScreen = () => {
   const navigation = useNavigation();
+  const { t, fontScale, colors, globalStyles } = useTheme();
 
   const handlePlayGame = (type, gameName) => {
     // We map 'language' back to 'routine' for the hackathon prototype engine
@@ -80,9 +82,9 @@ export const GamesScreen = () => {
     <ScrollView style={[globalStyles.container, { backgroundColor: '#f8fafc' }]} showsVerticalScrollIndicator={false}>
       
       <View style={{ marginBottom: 32, marginTop: 16 }}>
-        <Text style={[globalStyles.headerText, { fontSize: 32 }]}>Activity Library</Text>
-        <Text style={{ fontSize: 18, color: colors.textMuted, marginTop: 8 }}>
-          24 personalized cognitive exercises.
+        <Text style={[globalStyles.headerText, { fontSize: 32 * fontScale }]}>{t('activityLibrary') || 'Activity Library'}</Text>
+        <Text style={{ fontSize: 18 * fontScale, color: colors.textMuted, marginTop: 8 }}>
+          {t('cognitiveExercises') || '24 personalized cognitive exercises.'}
         </Text>
       </View>
 
@@ -94,8 +96,8 @@ export const GamesScreen = () => {
               <View style={[styles.iconBox, { backgroundColor: category.bg }]}>
                 <Icon color={category.color} size={28} />
               </View>
-              <Text style={{ fontSize: 24, fontWeight: '800', color: colors.textMain }}>
-                {category.title}
+              <Text style={{ fontSize: 24 * fontScale, fontWeight: '800', color: colors.textMain }}>
+                {t(category.title) || category.title}
               </Text>
             </View>
 
@@ -109,13 +111,13 @@ export const GamesScreen = () => {
                     activeOpacity={0.8}
                   >
                     <View style={{ flex: 1 }}>
-                      <Text style={styles.gameTitle} numberOfLines={2}>{game.name}</Text>
+                      <Text style={[styles.gameTitle, { color: colors.textMain, fontSize: 22 * fontScale }]} numberOfLines={2}>{t(game.name) || game.name}</Text>
                       <View style={{ backgroundColor: category.bg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, alignSelf: 'flex-start', marginTop: 12 }}>
-                        <Text style={{ color: category.color, fontWeight: '700', fontSize: 13 }}>{game.difficulty}</Text>
+                        <Text style={{ color: category.color, fontWeight: '700', fontSize: 13 * fontScale }}>{t(game.difficulty) || game.difficulty}</Text>
                       </View>
                     </View>
                     <View style={[styles.playBtn, { backgroundColor: category.bg }]}>
-                      <Text style={{ color: category.color, fontWeight: '800', fontSize: 16 }}>PLAY NOW</Text>
+                      <Text style={{ color: category.color, fontWeight: '800', fontSize: 16 * fontScale }}>{t('playNow') || 'PLAY NOW'}</Text>
                     </View>
                   </TouchableOpacity>
                 ))}
@@ -153,7 +155,7 @@ const styles = StyleSheet.create({
   gameTitle: {
     fontSize: 22,
     fontWeight: '800',
-    color: colors.textMain,
+    color: defaultColors.textMain,
     lineHeight: 28
   },
   playBtn: {
