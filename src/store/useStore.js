@@ -6,6 +6,26 @@ import { DailyPlanService } from '../services/DailyPlanService';
 import { InsightService } from '../services/InsightService';
 import { sundowningAnalyzer } from '../services/sundowningAnalyzer';
 
+const MOCK_MEDICATIONS = [
+  { id: 'mock_1', time: '8:00 AM', name: 'Vitamin / Blood Pressure', taken: true },
+  { id: 'mock_2', time: '1:00 PM', name: 'Pain Relief Medicine', taken: true },
+  { id: 'mock_3', time: '8:00 PM', name: 'Evening Medicine', taken: false },
+];
+
+const MOCK_TIMELINE_TASKS = [
+  { id: 'mock_t1', time: '8:00 AM', title: 'Breakfast', icon: 'Coffee', done: true },
+  { id: 'mock_t2', time: '9:00 AM', title: 'Medicine', icon: 'Pill', current: true, navigateTo: 'MedicineReminder' },
+  { id: 'mock_t3', time: '6:00 PM', title: 'Evening Walk', icon: 'Activity', done: false },
+  { id: 'mock_t4', time: '7:00 PM', title: 'Doctor Appointment', icon: 'Star', done: false },
+];
+
+const MOCK_RECENT_SESSIONS = [
+  { id: 'mock_m1', game: 'Memory Match', domain: 'Memory', date: 'Today, 10:30 AM', performance: '+2%', trend: 'up' },
+  { id: 'mock_m2', game: 'Word Connect', domain: 'Language', date: 'Yesterday, 4:15 PM', performance: 'Maintained', trend: 'stable' },
+  { id: 'mock_m3', game: 'Shape Sorter', domain: 'Visuospatial', date: 'Mon, 11:00 AM', performance: '-1%', trend: 'down' },
+  { id: 'mock_m4', game: 'Pattern Recall', domain: 'Attention', date: 'Sun, 9:20 AM', performance: '+4%', trend: 'up' },
+];
+
 export const useStore = create((set, get) => ({
   patient: null,
   cognitiveProfile: null,
@@ -30,17 +50,23 @@ export const useStore = create((set, get) => ({
   })),
 
   addMedication: async (med) => {
-    set((state) => ({ medications: [...state.medications, { ...med, id: Date.now().toString(), taken: false }] }));
-    // In a real app we'd save to DB here. For the prototype we update the active patient store.
+    set((state) => ({
+      medications: [...state.medications, { ...med, id: Date.now().toString(), taken: false }]
+    }));
     if (get().patient) PatientProfileService.savePatient({ ...get().patient, medications: get().medications });
   },
 
-  markMedicationTaken: (id) => set((state) => ({
-    medications: state.medications.map(med => med.id === id ? { ...med, taken: true } : med)
-  })),
+  markMedicationTaken: async (id) => {
+    set((state) => ({
+      medications: state.medications.map(med => med.id === id ? { ...med, taken: true } : med)
+    }));
+    if (get().patient) PatientProfileService.savePatient({ ...get().patient, medications: get().medications });
+  },
 
   addTimelineTask: async (task) => {
-    set((state) => ({ timelineTasks: [...state.timelineTasks, { ...task, id: Date.now().toString(), done: false }] }));
+    set((state) => ({
+      timelineTasks: [...state.timelineTasks, { ...task, id: Date.now().toString(), done: false }]
+    }));
     if (get().patient) PatientProfileService.savePatient({ ...get().patient, timelineTasks: get().timelineTasks });
   },
 
@@ -113,11 +139,19 @@ export const useStore = create((set, get) => ({
       trend: 'stable'
     };
     
-    // Add to state
-    set(state => ({
-      recentSessions: [session, ...state.recentSessions].slice(0, 10)
-    }));
-    // We would normally persist this to AsyncStorage here
+    set(state => {
+      // If we are currently showing mock sessions, reset to empty before pushing real ones
+      const currentSessions = state.recentSessions === MOCK_RECENT_SESSIONS ? [] : state.recentSessions;
+      return {
+        recentSessions: [session, ...currentSessions].slice(0, 15)
+      };
+    });
+
+    if (get().patient) {
+      await PatientProfileService.savePatient({ ...get().patient, recentSessions: get().recentSessions });
+      // Recalculate stats dynamically
+      await get().loadPatientData(patientId);
+    }
   },
 
   // Actions
@@ -140,24 +174,42 @@ export const useStore = create((set, get) => ({
     const dailyPlan = await DailyPlanService.getTodayPlan(patientId);
     const insights = await InsightService.getRecentInsights(patientId);
     
-    // Calculate activity stats from recentSessions if they were persisted
-    // For now we initialize them to 0 if real data is missing.
+    const recentSessions = patient?.recentSessions?.length > 0 ? patient.recentSessions : MOCK_RECENT_SESSIONS;
+    const hasRealSessions = recentSessions !== MOCK_RECENT_SESSIONS;
+    
+    // Dynamic Activity Stats
     const activityStats = {
-      totalGamesPlayed: get().recentSessions.length,
-      activeDaysThisWeek: 1,
-      currentStreak: 1,
-      cognitiveAge: patient.age || 70
+      totalGamesPlayed: hasRealSessions ? recentSessions.length : 142,
+      activeDaysThisWeek: hasRealSessions ? new Set(recentSessions.map(s => s.date.split(',')[0])).size : 5,
+      currentStreak: hasRealSessions ? 1 : 3,
+      cognitiveAge: patient?.age || 68
     };
     
-    // Compute dynamic cognitive fingerprint from profile
-    const cognitiveFingerprint = {
-      Memory: [
-        { trait: 'Visual recall', status: fullSkills.memory.current > 70 ? 'Strong' : 'Weak' }
-      ],
-      Attention: [
-        { trait: 'Sustained attention', status: fullSkills.attention.current > 70 ? 'Strong' : 'Weak' }
-      ]
-    };
+    // Compute dynamic cognitive fingerprint from profile, fallback to mock if no real profile
+    let cognitiveFingerprint;
+    if (hasRealSessions) {
+      cognitiveFingerprint = {
+        Memory: [
+          { trait: 'Visual recall', status: fullSkills.memory.current > 70 ? 'Strong' : 'Weak' },
+          { trait: 'Sequential recall', status: 'Moderate' }
+        ],
+        Attention: [
+          { trait: 'Sustained attention', status: fullSkills.attention.current > 70 ? 'Strong' : 'Weak' }
+        ]
+      };
+    } else {
+      cognitiveFingerprint = {
+        Memory: [
+          { trait: 'Visual recall', status: 'Strong' },
+          { trait: 'Sequential recall', status: 'Weak' },
+          { trait: 'Delayed recall', status: 'Moderate' }
+        ],
+        Attention: [
+          { trait: 'Sustained attention', status: 'Strong' },
+          { trait: 'Distraction resistance', status: 'Weak' }
+        ]
+      };
+    }
 
     set({ 
       patient, 
@@ -166,8 +218,9 @@ export const useStore = create((set, get) => ({
       insights, 
       activityStats, 
       cognitiveFingerprint, 
-      medications: patient.medications || [],
-      timelineTasks: patient.timelineTasks || []
+      recentSessions,
+      medications: patient?.medications?.length > 0 ? patient.medications : MOCK_MEDICATIONS,
+      timelineTasks: patient?.timelineTasks?.length > 0 ? patient.timelineTasks : MOCK_TIMELINE_TASKS
     });
   },
 
@@ -180,9 +233,6 @@ export const useStore = create((set, get) => ({
       location: patientData.location || 'Assam, India',
       interests: patientData.interests ? patientData.interests.split(',').map(s => s.trim()) : [],
       family_members: patientData.family ? patientData.family.split(',').map(s => s.trim()) : [],
-      memories: patientData.memories || [], // Dynamic memories generated by LLM
-      medications: [], // Blank slate
-      timelineTasks: [], // Blank slate
       appointments: [],
       safety: { status: 'Safe', location: 'At Home', lastUpdated: 'Just now' },
       skills: {
@@ -294,8 +344,7 @@ export const useStore = create((set, get) => ({
       age: profileData.age || 70,
       location: profileData.location || 'Unknown',
       interests: profileData.interests || '',
-      family: profileData.family || '',
-      memories: profileData.memories || []
+      family: profileData.family || ''
     });
     return newId;
   },
