@@ -6,7 +6,7 @@ import { useStore } from '../store/useStore';
 import { Mic, MicOff, CheckCircle2, Sparkles, BrainCircuit, ArrowRight } from 'lucide-react-native';
 import * as Speech from 'expo-speech';
 import { Audio } from 'expo-av';
-import { GeminiService } from '../services/GeminiService';
+import { GroqService } from '../services/GroqService';
 
 export const VoiceOnboardingScreen = () => {
   const navigation = useNavigation();
@@ -114,7 +114,7 @@ export const VoiceOnboardingScreen = () => {
       // Show temporary text while transcribing
       setTranscript('Translating audio...');
 
-      const transcribedText = await GeminiService.transcribeAudio(uri, detectedLangCode);
+      const transcribedText = await GroqService.transcribeAudio(uri, detectedLangCode);
       if (transcribedText) {
         setTranscript(transcribedText);
         handlePatientResponse(transcribedText);
@@ -145,7 +145,7 @@ export const VoiceOnboardingScreen = () => {
     } else {
       // Get AI response
       setIsSpeaking(true);
-      const aiReply = await GeminiService.chatTurn(updatedHistory, patientText, initialName, detectedLangCode);
+      const aiReply = await GroqService.chatTurn(updatedHistory, patientText, initialName, detectedLangCode);
       
       setChatHistory([...updatedHistory, { role: 'ai', text: aiReply }]);
       
@@ -177,7 +177,7 @@ export const VoiceOnboardingScreen = () => {
     Speech.speak(closingText, { language: detectedLangCode, rate: 0.9 });
     
     // Extract profile quietly in the background
-    const extractedProfile = await GeminiService.extractProfile(finalHistory, initialName);
+    const extractedProfile = await GroqService.extractProfile(finalHistory, initialName);
     
     const newPatientId = await saveOnboardedPatient(extractedProfile);
     await loadPatientData(newPatientId);

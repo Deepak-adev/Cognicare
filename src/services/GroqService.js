@@ -17,7 +17,7 @@ Your goal is to gently learn about their life, family, hobbies, and location wit
 - Be very encouraging, warm, and natural.
 `;
 
-export const GeminiService = {
+export const GroqService = {
   
   /**
    * Generates the next conversational response.
