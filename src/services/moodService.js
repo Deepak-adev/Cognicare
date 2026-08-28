@@ -41,18 +41,20 @@ Output strict JSON only: {"mood": "<one of the six values>", "confidence": <0-1 
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant', // Fast inference model
+          model: 'groq/compound-mini',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userContent },
           ],
           temperature: 0.1,
+          max_tokens: 150,
           response_format: { type: 'json_object' }
         }),
       });
 
       if (!response.ok) {
-        console.warn('[MoodService] Groq API returned an error:', response.status);
+        const errorData = await response.text();
+        console.warn('[MoodService] Groq API returned an error:', response.status, errorData);
         return { mood: 'calm', confidence: 0.5 }; // Fail safely
       }
 

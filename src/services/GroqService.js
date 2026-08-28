@@ -5,7 +5,7 @@ import { Platform } from 'react-native';
 
 const GROQ_API_KEY = process.env.EXPO_PUBLIC_GROQ_API_KEY;
 const API_URL = 'https://api.groq.com/openai/v1/chat/completions';
-const MODEL_NAME = 'groq/compound-mini';
+const MODEL_NAME = 'llama3-8b-8192';
 
 // System prompt for the onboarding conversation
 const ONBOARDING_SYSTEM_PROMPT = `
@@ -110,6 +110,8 @@ export const GroqService = {
       Extract as much of the following information as possible.
       Return ONLY a raw JSON object (no markdown formatting, no backticks).
       Keys required: "interests" (string), "family" (string), "location" (string), "age" (number, default to 70 if not mentioned).
+      Also generate a "memories" array containing 3-5 objects representing familiar things to the patient based on their profile.
+      Each memory object must have: "id" (number), "type" (string: 'family', 'place', or 'culture'), "title" (string), "subtitle" (string), "icon" (a single emoji), and "prompt" (a question to prompt their memory).
       If a field is not mentioned, return "Not provided".
       
       Conversation:
@@ -146,6 +148,7 @@ export const GroqService = {
         interests: parsed.interests || 'Not provided',
         family: parsed.family || 'Not provided',
         location: parsed.location || 'Not provided',
+        memories: parsed.memories || []
       };
     } catch (e) {
       console.error('[GeminiService Extraction Error]', e);

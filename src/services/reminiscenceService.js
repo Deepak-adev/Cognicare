@@ -47,17 +47,19 @@ Photo metadata (who/when/tags): ${typeof photoMetadata === 'object' ? JSON.strin
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'llama-3.1-8b-instant',
+          model: 'groq/compound-mini',
           messages: [
             { role: 'system', content: systemPrompt },
             { role: 'user', content: userContent },
           ],
           temperature: 0.3,
+          max_tokens: 150,
         }),
       });
 
       if (!response.ok) {
-        throw new Error(`API returned ${response.status}`);
+        const errorData = await response.text();
+        throw new Error(`API returned ${response.status}: ${errorData}`);
       }
 
       const data = await response.json();
