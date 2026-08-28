@@ -18,8 +18,10 @@ import { ConfusionRescueScreen } from './src/pages/ConfusionRescueScreen';
 
 import { GamesScreen } from './src/pages/GamesScreen';
 import { LogOut, LayoutDashboard, Settings, Gamepad2, Pill } from 'lucide-react-native';
-import { TouchableOpacity } from 'react-native';
+import { TouchableOpacity, View } from 'react-native';
 import { useStore } from './src/store/useStore';
+import { GeminiChatButton } from './src/components/GeminiChatButton';
+import { navigationRef } from './src/utils/navigationRef';
 import { useTheme } from './src/hooks/useTheme';
 
 const Tab = createBottomTabNavigator();
@@ -125,14 +127,18 @@ export default function App() {
   }, [loadPatientData, seedMockDataIfEmpty]);
 
   return (
-    <NavigationContainer>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
-        <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
-        <Stack.Screen name="PatientLogin" component={VoicePatientLoginScreen} /> 
-        <Stack.Screen name="VoiceOnboarding" component={VoiceOnboardingScreen} /> 
-        <Stack.Screen name="CaregiverStack" component={CaregiverStack} />
-        <Stack.Screen name="PatientStack" component={PatientStack} />
-      </Stack.Navigator>
-    </NavigationContainer>
+    <View style={{ flex: 1 }}>
+      <NavigationContainer ref={navigationRef}>
+        <Stack.Navigator screenOptions={{ headerShown: false }}>
+          <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
+          <Stack.Screen name="PatientLogin" component={VoicePatientLoginScreen} /> 
+          <Stack.Screen name="VoiceOnboarding" component={VoiceOnboardingScreen} /> 
+          <Stack.Screen name="CaregiverStack" component={CaregiverStack} />
+          <Stack.Screen name="PatientStack" component={PatientStack} />
+        </Stack.Navigator>
+      </NavigationContainer>
+      {/* Floating Gemini AI Chat Button - visible on all screens */}
+      <GeminiChatButton />
+    </View>
   );
 }
