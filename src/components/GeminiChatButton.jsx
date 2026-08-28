@@ -15,7 +15,10 @@ import {
   ScrollView,
 } from 'react-native';
 import * as Speech from 'expo-speech';
+import { Audio } from 'expo-av';
+import { Mic, MicOff } from 'lucide-react-native';
 import { sendMessageToGemini } from '../services/geminiService';
+import { GroqService } from '../services/GroqService';
 import { navigateTo } from '../utils/navigationRef';
 import { useStore } from '../store/useStore';
 import { db } from '../db/db';
@@ -149,6 +152,11 @@ export const GeminiChatButton = () => {
   ]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(false);
+  
+  const [isRecording, setIsRecording] = useState(false);
+  const [recording, setRecording] = useState(null);
+  const [wasVoiceQuery, setWasVoiceQuery] = useState(false);
+  const pulseAnim = useRef(new Animated.Value(1)).current;
 
   const slideAnim = useRef(new Animated.Value(SCREEN_HEIGHT)).current;
   const fabScale = useRef(new Animated.Value(1)).current;
@@ -196,6 +204,60 @@ export const GeminiChatButton = () => {
       setIsOpen(false);
       Animated.spring(fabScale, { toValue: 1, useNativeDriver: true }).start();
     });
+  };
+
+  useEffect(() => {
+    if (isRecording) {
+      Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, { toValue: 1.15, duration: 500, useNativeDriver: true }),
+          Animated.timing(pulseAnim, { toValue: 1, duration: 500, useNativeDriver: true }),
+        ])
+      ).start();
+    } else {
+      pulseAnim.setValue(1);
+    }
+  }, [isRecording]);
+
+  const startRecording = async () => {
+    if (recording) return;
+    try {
+      await Audio.requestPermissionsAsync();
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+      const { recording: newRec } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+      setRecording(newRec);
+      setIsRecording(true);
+    } catch (err) {
+      console.error('[AGUI] Failed to start recording', err);
+      setIsRecording(false);
+    }
+  };
+
+  const stopRecording = async () => {
+    setIsRecording(false);
+    if (!recording) return;
+    try {
+      await recording.stopAndUnloadAsync();
+      await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+      const uri = recording.getURI();
+      setRecording(null);
+
+      setIsLoading(true);
+      setInputText('Listening...');
+      const transcribed = await GroqService.transcribeAudio(uri, 'en-US');
+      if (transcribed) {
+        setWasVoiceQuery(true);
+        setInputText('');
+        handleSend(transcribed, true);
+      } else {
+        setInputText('');
+        setIsLoading(false);
+      }
+    } catch (err) {
+      console.error('[AGUI] Failed to stop recording', err);
+      setIsLoading(false);
+      setInputText('');
+    }
   };
 
   /**
@@ -264,9 +326,12 @@ export const GeminiChatButton = () => {
     }
   }, [medications, updatePatientSettings, markMedicationTaken, addMedication, addTimelineTask]);
 
-  const handleSend = useCallback(async (textToSend) => {
+  const handleSend = useCallback(async (textToSend, forceVoice = false) => {
     const query = (textToSend || inputText).trim();
     if (!query || isLoading) return;
+
+    const isVoice = forceVoice || wasVoiceQuery;
+    setWasVoiceQuery(false); // reset immediately after tracking this request
 
     const userMsg = { id: Date.now().toString(), role: 'user', text: query };
     setMessages((prev) => [...prev, userMsg]);
@@ -327,8 +392,8 @@ export const GeminiChatButton = () => {
         executeAgenticAction(response.action);
       }
 
-      // Voice output if enabled in settings
-      if (patientSettings?.voiceFeedback) {
+      // Voice output if enabled in settings or it was a voice query
+      if (patientSettings?.voiceFeedback || isVoice) {
         Speech.speak(aiText);
       }
     } catch (err) {
@@ -453,19 +518,30 @@ export const GeminiChatButton = () => {
               <View style={styles.inputRow}>
                 <TextInput
                   style={styles.input}
-                  placeholder="Tell me what to do or ask..."
+                  placeholder={isRecording ? "Listening..." : "Tell me what to do or ask..."}
                   placeholderTextColor="#94a3b8"
                   value={inputText}
                   onChangeText={setInputText}
-                  onSubmitEditing={() => handleSend()}
+                  onSubmitEditing={() => handleSend(inputText)}
                   returnKeyType="send"
                   multiline
                   maxLength={500}
-                  editable={!isLoading}
+                  editable={!isLoading && !isRecording}
                 />
+                
+                <Animated.View style={{ transform: [{ scale: pulseAnim }], marginRight: 8 }}>
+                  <TouchableOpacity
+                    style={[styles.micBtn, isRecording && styles.micBtnActive, isLoading && styles.sendBtnDisabled]}
+                    onPress={isRecording ? stopRecording : startRecording}
+                    disabled={isLoading}
+                    activeOpacity={0.8}
+                  >
+                    {isRecording ? <MicOff color="#fff" size={20} /> : <Mic color="#fff" size={20} />}
+                  </TouchableOpacity>
+                </Animated.View>
                 <TouchableOpacity
                   style={[styles.sendBtn, (!inputText.trim() || isLoading) && styles.sendBtnDisabled]}
-                  onPress={() => handleSend()}
+                  onPress={() => handleSend(inputText)}
                   disabled={!inputText.trim() || isLoading}
                   activeOpacity={0.8}
                 >
@@ -798,6 +874,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     shadowColor: '#4f46e5',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 8,
+    elevation: 6,
+  },
+  micBtn: {
+    width: 46,
+    height: 46,
+    borderRadius: 23,
+    backgroundColor: '#334155',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  micBtnActive: {
+    backgroundColor: '#ef4444',
+    shadowColor: '#ef4444',
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.4,
     shadowRadius: 8,
