@@ -14,17 +14,8 @@ export const useStore = create((set, get) => ({
   activityStats: null,
   cognitiveFingerprint: null,
   recentSessions: [],
-  medications: [
-    { id: '1', time: '8:00 AM', name: 'Vitamin / Blood Pressure', taken: true },
-    { id: '2', time: '1:00 PM', name: 'Pain Relief Medicine', taken: true },
-    { id: '3', time: '8:00 PM', name: 'Evening Medicine', taken: false },
-  ],
-  timelineTasks: [
-    { id: 't1', time: '8:00 AM', title: 'Breakfast', icon: 'Coffee', done: true },
-    { id: 't2', time: '9:00 AM', title: 'Medicine', icon: 'Pill', current: true, navigateTo: 'MedicineReminder' },
-    { id: 't3', time: '6:00 PM', title: 'Evening Walk', icon: 'Activity', done: false },
-    { id: 't4', time: '7:00 PM', title: 'Doctor Appointment', icon: 'Star', done: false },
-  ],
+  medications: [],
+  timelineTasks: [],
   isOffline: false,
   patientSettings: { language: 'English', fontSize: 'Normal', highContrast: false },
   routineAlerts: [],
@@ -38,17 +29,20 @@ export const useStore = create((set, get) => ({
     patientSettings: { ...state.patientSettings, ...newSettings }
   })),
 
-  addMedication: (med) => set((state) => ({
-    medications: [...state.medications, { ...med, id: Date.now().toString(), taken: false }]
-  })),
+  addMedication: async (med) => {
+    set((state) => ({ medications: [...state.medications, { ...med, id: Date.now().toString(), taken: false }] }));
+    // In a real app we'd save to DB here. For the prototype we update the active patient store.
+    if (get().patient) PatientProfileService.savePatient({ ...get().patient, medications: get().medications });
+  },
 
   markMedicationTaken: (id) => set((state) => ({
     medications: state.medications.map(med => med.id === id ? { ...med, taken: true } : med)
   })),
 
-  addTimelineTask: (task) => set((state) => ({
-    timelineTasks: [...state.timelineTasks, { ...task, id: Date.now().toString(), done: false }]
-  })),
+  addTimelineTask: async (task) => {
+    set((state) => ({ timelineTasks: [...state.timelineTasks, { ...task, id: Date.now().toString(), done: false }] }));
+    if (get().patient) PatientProfileService.savePatient({ ...get().patient, timelineTasks: get().timelineTasks });
+  },
 
   evaluateRoutine: () => set((state) => {
     const alerts = [];
@@ -108,6 +102,24 @@ export const useStore = create((set, get) => ({
     set({ sundowningRiskWindow: riskWindow });
   },
 
+  recordGameSession: async (patientId, gameType, domain, score, accuracy) => {
+    const session = {
+      id: Date.now().toString(),
+      game: gameType,
+      domain,
+      date: new Date().toLocaleString(),
+      performance: score,
+      accuracy,
+      trend: 'stable'
+    };
+    
+    // Add to state
+    set(state => ({
+      recentSessions: [session, ...state.recentSessions].slice(0, 10)
+    }));
+    // We would normally persist this to AsyncStorage here
+  },
+
   // Actions
   loadPatientData: async (patientId) => {
     const patient = await PatientProfileService.getPatient(patientId);
@@ -128,34 +140,35 @@ export const useStore = create((set, get) => ({
     const dailyPlan = await DailyPlanService.getTodayPlan(patientId);
     const insights = await InsightService.getRecentInsights(patientId);
     
-    // Mocking Activity Stats, Recent Sessions, and Cognitive Fingerprint for the dashboard
+    // Calculate activity stats from recentSessions if they were persisted
+    // For now we initialize them to 0 if real data is missing.
     const activityStats = {
-      totalGamesPlayed: 142,
-      activeDaysThisWeek: 5,
-      currentStreak: 3,
-      cognitiveAge: 68
+      totalGamesPlayed: get().recentSessions.length,
+      activeDaysThisWeek: 1,
+      currentStreak: 1,
+      cognitiveAge: patient.age || 70
     };
     
+    // Compute dynamic cognitive fingerprint from profile
     const cognitiveFingerprint = {
       Memory: [
-        { trait: 'Visual recall', status: 'Strong' },
-        { trait: 'Sequential recall', status: 'Weak' },
-        { trait: 'Delayed recall', status: 'Moderate' }
+        { trait: 'Visual recall', status: fullSkills.memory.current > 70 ? 'Strong' : 'Weak' }
       ],
       Attention: [
-        { trait: 'Sustained attention', status: 'Strong' },
-        { trait: 'Distraction resistance', status: 'Weak' }
+        { trait: 'Sustained attention', status: fullSkills.attention.current > 70 ? 'Strong' : 'Weak' }
       ]
     };
 
-    const recentSessions = [
-      { id: 1, game: 'Memory Match', domain: 'Memory', date: 'Today, 10:30 AM', performance: '+2%', trend: 'up' },
-      { id: 2, game: 'Word Connect', domain: 'Language', date: 'Yesterday, 4:15 PM', performance: 'Maintained', trend: 'stable' },
-      { id: 3, game: 'Shape Sorter', domain: 'Visuospatial', date: 'Mon, 11:00 AM', performance: '-1%', trend: 'down' },
-      { id: 4, game: 'Pattern Recall', domain: 'Attention', date: 'Sun, 9:20 AM', performance: '+4%', trend: 'up' },
-    ];
-
-    set({ patient, cognitiveProfile, dailyPlan, insights, activityStats, cognitiveFingerprint, recentSessions });
+    set({ 
+      patient, 
+      cognitiveProfile, 
+      dailyPlan, 
+      insights, 
+      activityStats, 
+      cognitiveFingerprint, 
+      medications: patient.medications || [],
+      timelineTasks: patient.timelineTasks || []
+    });
   },
 
   createNewPatient: async (patientData) => {
@@ -167,6 +180,9 @@ export const useStore = create((set, get) => ({
       location: patientData.location || 'Assam, India',
       interests: patientData.interests ? patientData.interests.split(',').map(s => s.trim()) : [],
       family_members: patientData.family ? patientData.family.split(',').map(s => s.trim()) : [],
+      memories: patientData.memories || [], // Dynamic memories generated by LLM
+      medications: [], // Blank slate
+      timelineTasks: [], // Blank slate
       appointments: [],
       safety: { status: 'Safe', location: 'At Home', lastUpdated: 'Just now' },
       skills: {
@@ -278,7 +294,8 @@ export const useStore = create((set, get) => ({
       age: profileData.age || 70,
       location: profileData.location || 'Unknown',
       interests: profileData.interests || '',
-      family: profileData.family || ''
+      family: profileData.family || '',
+      memories: profileData.memories || []
     });
     return newId;
   },
