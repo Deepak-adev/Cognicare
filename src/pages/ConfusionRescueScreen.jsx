@@ -1,7 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Linking, Animated, Easing } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import * as Speech from 'expo-speech';
+import TTSService from '../services/TTSService';
 import { globalStyles, colors, Button } from '../components/common';
 import { Home, Calendar, Clock, PhoneCall, HeartHandshake } from 'lucide-react-native';
 import { useStore } from '../store/useStore';
@@ -9,7 +9,7 @@ import { useTheme } from '../hooks/useTheme';
 
 export const ConfusionRescueScreen = () => {
   const navigation = useNavigation();
-  const { patient, timelineTasks } = useStore();
+  const { patient, timelineTasks, triggerRescueProtocol } = useStore();
   const { fontScale } = useTheme();
   
   const [currentTime, setCurrentTime] = useState('');
@@ -27,7 +27,7 @@ export const ConfusionRescueScreen = () => {
     const speakMessage = () => {
       const text = `You are safe. You are at home. Take a slow, deep breath in...... and out....... Today is ${now.toLocaleDateString([], { weekday: 'long' })}. I am here to help you.`;
       
-      Speech.speak(text, {
+      TTSService.speak(text, {
         language: 'en-US',
         pitch: 1,
         rate: 0.7, // Slower, soothing pace
@@ -66,7 +66,7 @@ export const ConfusionRescueScreen = () => {
     
     return () => {
       isMounted = false;
-      Speech.stop();
+      TTSService.stop();
     };
   }, [patient, timelineTasks]);
 
@@ -128,7 +128,8 @@ export const ConfusionRescueScreen = () => {
       {/* 5. Return Button */}
       <Button 
         onPress={() => {
-          Speech.stop();
+          TTSService.stop();
+          triggerRescueProtocol(false);
           navigation.goBack();
         }}
         style={styles.okBtn}

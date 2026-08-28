@@ -1,14 +1,15 @@
 import React, { useState, useEffect } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, TextInput, Modal } from 'react-native';
+import Svg, { Polygon, Circle, Line, Text as SvgText } from 'react-native-svg';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { useStore } from '../store/useStore';
 import { Card, globalStyles, colors } from '../components/common';
-import { Activity, Brain, ShieldAlert, MapPin, Calendar, Settings, Type, Eye, EyeOff, Minimize, Hand, Volume2, Globe, Home, Flame, Gamepad2, CalendarDays, TrendingUp, TrendingDown, Minus, Clock, Pill, Plus, Fingerprint, User, Edit3 } from 'lucide-react-native';
+import { Activity, Brain, ShieldAlert, MapPin, Calendar, Settings, Type, Eye, EyeOff, Minimize, Hand, Volume2, Globe, Home, Flame, Gamepad2, CalendarDays, TrendingUp, TrendingDown, Minus, Clock, Pill, Plus, Fingerprint, User, Edit3, Target, Bot, AlertTriangle, BarChart2 } from 'lucide-react-native';
 
 const Tab = createBottomTabNavigator();
 
 const CaregiverHomeTab = () => {
-  const { patient, isOffline } = useStore();
+  const { patient, isOffline, wanderAlertActive, sundowningRiskWindow, triggerRescueProtocol } = useStore();
   
   if (!patient) return <View style={globalStyles.container}><Text>Loading...</Text></View>;
 
@@ -25,6 +26,25 @@ const CaregiverHomeTab = () => {
           </View>
         )}
       </View>
+
+      {wanderAlertActive && (
+        <View style={{ backgroundColor: sundowningRiskWindow ? '#991b1b' : colors.danger, padding: 16, borderRadius: 16, marginBottom: 20 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <ShieldAlert color="#ffffff" size={24} style={{ marginRight: 8 }} />
+              <Text style={{ color: '#ffffff', fontWeight: '900', fontSize: 18 }}>
+                URGENT: PATIENT LEFT SAFE ZONE
+              </Text>
+            </View>
+            <TouchableOpacity onPress={() => triggerRescueProtocol(false)} style={{ backgroundColor: '#ffffff30', paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12 }}>
+              <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 14 }}>Dismiss</Text>
+            </TouchableOpacity>
+          </View>
+          <Text style={{ color: '#ffffff', fontSize: 16 }}>
+            {sundowningRiskWindow ? 'High risk! Geofence breached during sundowning window.' : 'Geofence breached. Please check on the patient immediately.'}
+          </Text>
+        </View>
+      )}
 
       {/* Safety & Location Tracking */}
       {patient.safety && (
@@ -71,25 +91,210 @@ const CaregiverHomeTab = () => {
   );
 };
 
+const CognitiveStatusCard = ({ cognitiveProfile }) => {
+  if (!cognitiveProfile || !cognitiveProfile.skills) return null;
+  
+  const skills = Object.entries(cognitiveProfile.skills);
+  const totalScore = skills.reduce((acc, [_, data]) => acc + data.current, 0);
+  const efficiencyScore = Math.round(totalScore / skills.length);
+  
+  let cognitiveStage = "Moderate Support";
+  if (efficiencyScore >= 80) cognitiveStage = "Stable Support";
+  else if (efficiencyScore < 60) cognitiveStage = "Intensive Support";
+  
+  // Calculate Longitudinal Trend
+  const trendDiff = skills.reduce((acc, [_, data]) => acc + (data.current - data.baseline), 0);
+  const riskZone = trendDiff <= -10 ? 'High-Concern Zone' : trendDiff < -2 ? 'Approaching High-Concern Zone' : 'Stable';
+  const riskColor = riskZone === 'High-Concern Zone' ? colors.danger : riskZone === 'Approaching High-Concern Zone' ? colors.accent : colors.success;
+
+  const getCoordinatesForValue = (value, angle, center = 170, maxRadius = 100) => {
+    const r = (value / 100) * maxRadius;
+    const radians = (angle - 90) * (Math.PI / 180);
+    return {
+      x: center + r * Math.cos(radians),
+      y: center + r * Math.sin(radians)
+    };
+  };
+
+  const currentPoints = skills.map(([_, data], i) => {
+    const coords = getCoordinatesForValue(data.current, i * (360 / skills.length));
+    return `${coords.x},${coords.y}`;
+  }).join(' ');
+  
+  const baselinePoints = skills.map(([_, data], i) => {
+    const coords = getCoordinatesForValue(data.baseline, i * (360 / skills.length));
+    return `${coords.x},${coords.y}`;
+  }).join(' ');
+
+  const strengths = skills.filter(([_, data]) => data.current >= 75).map(([name]) => name.replace('_', ' '));
+  const weaknesses = skills.filter(([_, data]) => data.current < 70).map(([name]) => name.replace('_', ' '));
+
+  return (
+    <Card style={{ backgroundColor: '#ffffff', borderColor: '#e2e8f0' }}>
+      <View style={{ marginBottom: 24 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+          <Brain color={colors.primary} size={18} style={{ marginRight: 8 }} />
+          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textMain }}>Cognitive Efficiency Score: {efficiencyScore}/100</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 4 }}>
+          <MapPin color={colors.accent} size={18} style={{ marginRight: 8 }} />
+          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textMain }}>Current Status: {efficiencyScore >= 80 ? 'Stable' : 'Needs Attention'}</Text>
+        </View>
+        <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+          <TrendingUp color="#818cf8" size={18} style={{ marginRight: 8 }} />
+          <Text style={{ fontSize: 16, fontWeight: '700', color: colors.textMain }}>Stage: {cognitiveStage}</Text>
+        </View>
+      </View>
+
+      <View style={{ alignItems: 'center', marginBottom: 24 }}>
+        <Svg width={340} height={340} viewBox="0 0 340 340">
+          {/* Grid lines */}
+          {[20, 40, 60, 80, 100].map(val => {
+            const points = skills.map((_, i) => Object.values(getCoordinatesForValue(val, i * (360/skills.length))).join(',')).join(' ');
+            return <Polygon key={`grid-${val}`} points={points} stroke="#e2e8f0" strokeWidth="1" fill="none" />
+          })}
+          
+          {/* Axis lines and labels */}
+          {skills.map(([name], i) => {
+            const angle = i * (360 / skills.length);
+            const outer = getCoordinatesForValue(100, angle);
+            const labelPos = getCoordinatesForValue(125, angle);
+            return (
+              <React.Fragment key={`axis-${i}`}>
+                <Line x1="170" y1="170" x2={outer.x} y2={outer.y} stroke="#cbd5e1" strokeWidth="1" />
+                <SvgText x={labelPos.x} y={labelPos.y} fill={colors.textMuted} fontSize="12" fontWeight="700" textAnchor="middle" alignmentBaseline="middle">
+                  {name.replace('_', ' ').toUpperCase()}
+                </SvgText>
+              </React.Fragment>
+            );
+          })}
+          
+          {/* Baseline Polygon (Grey dashed) */}
+          <Polygon points={baselinePoints} stroke="#94a3b8" strokeWidth="2" strokeDasharray="4 4" fill="none" />
+          
+          {/* Current Status Polygon (Primary color) */}
+          <Polygon points={currentPoints} stroke={colors.primary} strokeWidth="3" fill={colors.primary} fillOpacity="0.15" />
+          
+          {/* Data Points */}
+          {skills.map(([_, data], i) => {
+            const coords = getCoordinatesForValue(data.current, i * (360 / skills.length));
+            return <Circle key={`point-${i}`} cx={coords.x} cy={coords.y} r="4" fill={colors.primary} />
+          })}
+        </Svg>
+        
+        <View style={{ flexDirection: 'row', marginTop: 8, alignItems: 'center', gap: 16 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ width: 12, height: 12, backgroundColor: colors.primary, borderRadius: 6 }} />
+            <Text style={{ fontSize: 12, color: colors.textMuted, fontWeight: '600' }}>Current Performance</Text>
+          </View>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+            <View style={{ width: 12, height: 12, borderColor: '#94a3b8', borderWidth: 2, borderStyle: 'dashed', borderRadius: 6 }} />
+            <Text style={{ fontSize: 12, color: colors.textMuted, fontWeight: '600' }}>Baseline</Text>
+          </View>
+        </View>
+      </View>
+
+      {/* Domain Performance Table */}
+      <View style={{ marginBottom: 24 }}>
+        <View style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#e2e8f0', paddingBottom: 8, marginBottom: 8 }}>
+          <Text style={{ flex: 2, fontWeight: '700', color: colors.textMain }}>Domain</Text>
+          <Text style={{ flex: 1, fontWeight: '700', color: colors.textMain, textAlign: 'right' }}>Performance</Text>
+          <Text style={{ flex: 1.5, fontWeight: '700', color: colors.textMain, textAlign: 'right' }}>Status</Text>
+        </View>
+        {skills.map(([name, data]) => {
+          let statusText = 'Stable';
+          let statusColor = colors.success;
+          let icon = '✅';
+          
+          if (data.current < 65) {
+            statusText = 'Priority';
+            statusColor = colors.danger;
+            icon = '🔴';
+          } else if (data.current < 75) {
+            statusText = 'Needs Improvement';
+            statusColor = colors.accentDark || '#b45309';
+            icon = '⚠️';
+          } else if (data.current >= 85) {
+            statusText = 'Strong';
+            statusColor = colors.success;
+            icon = '✅';
+          }
+
+          return (
+            <View key={name} style={{ flexDirection: 'row', borderBottomWidth: 1, borderBottomColor: '#f1f5f9', paddingVertical: 12, alignItems: 'center' }}>
+              <Text style={{ flex: 2, fontSize: 16, color: colors.textMuted, textTransform: 'capitalize' }}>{name.replace('_', ' ')}</Text>
+              <Text style={{ flex: 1, fontSize: 16, color: colors.textMain, textAlign: 'right' }}>{data.current}%</Text>
+              <Text style={{ flex: 1.5, fontSize: 14, fontWeight: '600', color: colors.textMain, textAlign: 'right' }}>{icon} {statusText}</Text>
+            </View>
+          );
+        })}
+      </View>
+
+      {/* Analysis Summary */}
+      <View style={{ marginBottom: 24, backgroundColor: '#f8fafc', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#f1f5f9' }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
+          <Target color="#ec4899" size={20} style={{ marginRight: 10, marginTop: 2 }} />
+          <Text style={{ fontSize: 16, color: colors.textMain, flex: 1, lineHeight: 24 }}>
+            <Text style={{ fontWeight: '800' }}>Improvement Needed: </Text>
+            {weaknesses.length > 0 ? weaknesses.map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' + ') : 'None identified'}
+          </Text>
+        </View>
+        
+        {(() => {
+          // Find the worst trending domain
+          const worstTrend = skills.reduce((worst, [name, data]) => {
+            const diff = data.current - data.baseline;
+            if (diff < worst.diff) return { name, diff };
+            return worst;
+          }, { name: '', diff: 0 });
+          
+          if (worstTrend.diff < 0) {
+            return (
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
+                <BarChart2 color="#3b82f6" size={20} style={{ marginRight: 10, marginTop: 2 }} />
+                <Text style={{ fontSize: 16, color: colors.textMain, flex: 1, lineHeight: 24 }}>
+                  <Text style={{ fontWeight: '800' }}>Trend: </Text>
+                  {worstTrend.name.replace('_', ' ').charAt(0).toUpperCase() + worstTrend.name.slice(1)} ↓ {Math.abs(worstTrend.diff)}% over last 4 sessions
+                </Text>
+              </View>
+            );
+          }
+          return null;
+        })()}
+
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start', marginBottom: 12 }}>
+          <AlertTriangle color={riskColor} size={20} style={{ marginRight: 10, marginTop: 2 }} />
+          <Text style={{ fontSize: 16, color: colors.textMain, flex: 1, lineHeight: 24 }}>
+            <Text style={{ fontWeight: '800' }}>Risk Zone: </Text>
+            <Text style={{ color: riskColor, fontWeight: '700' }}>{riskZone}</Text>
+          </Text>
+        </View>
+        
+        <View style={{ flexDirection: 'row', alignItems: 'flex-start' }}>
+          <Bot color="#8b5cf6" size={20} style={{ marginRight: 10, marginTop: 2 }} />
+          <Text style={{ fontSize: 16, color: colors.textMain, flex: 1, lineHeight: 24 }}>
+            <Text style={{ fontWeight: '800' }}>AI Action: </Text>
+            Increase {weaknesses.length > 0 ? weaknesses[0].toLowerCase() : 'cognitive'}-oriented activities and monitor closely.
+          </Text>
+        </View>
+      </View>
+
+      {/* Disclaimer */}
+      <Text style={{ fontSize: 14, color: colors.textMuted, lineHeight: 22, fontWeight: '500', marginBottom: 40 }}>
+        <Text style={{ fontWeight: '800', color: colors.textMain }}>Important:</Text> The "risk zone" should be presented as a <Text style={{ fontWeight: '800', color: colors.textMain }}>support/attention indicator, not a dementia diagnosis</Text>; persistent concerning changes can be flagged for caregiver/clinician review.
+      </Text>
+    </Card>
+  );
+};
+
 const CaregiverHealthTab = () => {
-  const { cognitiveProfile, activityStats, recentSessions, cognitiveFingerprint } = useStore();
+  const { cognitiveProfile, activityStats, recentSessions, cognitiveFingerprint, clinicalTests } = useStore();
   if (!cognitiveProfile) return <View style={globalStyles.container}><Text>Loading...</Text></View>;
 
   return (
     <ScrollView style={globalStyles.container} showsVerticalScrollIndicator={false}>
       
-      {/* Overall Brain Health Score */}
-      <Card style={{ backgroundColor: colors.primary, borderColor: colors.primaryDark }}>
-        <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
-          <View>
-            <Text style={{ color: '#ffffff', fontSize: 16, fontWeight: '600', opacity: 0.9 }}>Overall Cognitive Age</Text>
-            <Text style={{ color: '#ffffff', fontSize: 42, fontWeight: '900', marginTop: 4 }}>{activityStats?.cognitiveAge || 70} <Text style={{ fontSize: 20, fontWeight: '600', opacity: 0.8 }}>yrs</Text></Text>
-          </View>
-          <View style={{ backgroundColor: '#ffffff20', padding: 16, borderRadius: 24 }}>
-            <Brain color="#ffffff" size={40} />
-          </View>
-        </View>
-      </Card>
+      <CognitiveStatusCard cognitiveProfile={cognitiveProfile} />
 
       {/* Game Activity Stats */}
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 16 }}>
@@ -225,6 +430,59 @@ const CaregiverHealthTab = () => {
             </View>
           );
         })}
+      </Card>
+
+      {/* Clinical Biomarkers */}
+      <Card>
+        <View style={styles.cardHeader}>
+          <Activity color={colors.primary} size={28} />
+          <Text style={styles.cardTitle}>Clinical Biomarkers</Text>
+        </View>
+        <Text style={{ color: colors.textMuted, marginBottom: 16 }}>Data extracted from digitial clinical assessments (Clock Drawing, Verbal Fluency).</Text>
+        
+        {clinicalTests && clinicalTests.map((test) => (
+          <View key={test.id} style={{ marginBottom: 20, backgroundColor: '#f8fafc', padding: 16, borderRadius: 16, borderWidth: 1, borderColor: '#e2e8f0' }}>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+              <Text style={{ fontSize: 18, fontWeight: '800', color: colors.textMain }}>{test.type}</Text>
+              <Text style={{ fontSize: 14, color: colors.textMuted }}>{test.date}</Text>
+            </View>
+            
+            {test.type === 'Clock Drawing' && (
+              <View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ color: colors.textMain, fontWeight: '600' }}>Time Taken:</Text>
+                  <Text style={{ color: colors.textMain, fontWeight: '800' }}>{test.data.timeTaken} sec</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ color: colors.textMain, fontWeight: '600' }}>Total Strokes:</Text>
+                  <Text style={{ color: colors.textMain, fontWeight: '800' }}>{test.data.strokes}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <Text style={{ color: colors.textMain, fontWeight: '600' }}>Hesitation Pauses:</Text>
+                  <Text style={{ color: test.data.hesitationPauses > 2 ? colors.danger : colors.textMain, fontWeight: '800' }}>{test.data.hesitationPauses}</Text>
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 14, fontStyle: 'italic' }}>AI Interpretation: {test.data.interpretation}</Text>
+              </View>
+            )}
+
+            {test.type === 'Verbal Fluency' && (
+              <View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
+                  <Text style={{ color: colors.textMain, fontWeight: '600' }}>Score (Unique Words):</Text>
+                  <Text style={{ color: colors.primary, fontWeight: '900', fontSize: 18 }}>{test.data.score}</Text>
+                </View>
+                <View style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 12 }}>
+                  <Text style={{ color: colors.textMain, fontWeight: '600' }}>Category:</Text>
+                  <Text style={{ color: colors.textMain, fontWeight: '800' }}>{test.data.category}</Text>
+                </View>
+                <Text style={{ color: colors.textMuted, fontSize: 14, fontStyle: 'italic' }}>Raw Transcript: {test.data.words?.join(', ')}</Text>
+              </View>
+            )}
+          </View>
+        ))}
+        {(!clinicalTests || clinicalTests.length === 0) && (
+          <Text style={{ color: colors.textMuted, textAlign: 'center' }}>No clinical test data available yet.</Text>
+        )}
       </Card>
 
       {/* Recent Game Sessions */}

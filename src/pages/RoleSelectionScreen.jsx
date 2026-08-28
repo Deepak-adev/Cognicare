@@ -1,9 +1,8 @@
 import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import { globalStyles, colors, Button } from '../components/common';
 import { useNavigation } from '@react-navigation/native';
 import { HeartPulse, LayoutDashboard } from 'lucide-react-native';
-import { useStore } from '../store/useStore';
 
 export const RoleSelectionScreen = () => {
   const navigation = useNavigation();
@@ -11,8 +10,12 @@ export const RoleSelectionScreen = () => {
   return (
     <View style={[globalStyles.container, { justifyContent: 'center', backgroundColor: '#f8fafc' }]}>
       <View style={{ alignItems: 'center', marginBottom: 60 }}>
-        <Text style={{ fontSize: 60, marginBottom: 16 }}>🏡</Text>
-        <Text style={[globalStyles.headerText, { textAlign: 'center', color: colors.textMain }]}>Cognitive Care</Text>
+        <Image 
+          source={require('../../assets/cognicare_logo.png')} 
+          style={{ width: 140, height: 140, marginBottom: 16 }} 
+          resizeMode="contain"
+        />
+        <Text style={[globalStyles.headerText, { textAlign: 'center', color: colors.textMain }]}>CogniCare</Text>
         <Text style={{ fontSize: 18, color: colors.textMuted, textAlign: 'center', marginTop: 8 }}>
           Who is using the app right now?
         </Text>
@@ -44,16 +47,6 @@ export const RoleSelectionScreen = () => {
           <Text style={styles.roleTitle}>I am a Caregiver</Text>
           <Text style={styles.roleDesc}>Manage patients and view insights.</Text>
         </View>
-      </TouchableOpacity>
-
-      <TouchableOpacity 
-        style={{ marginTop: 20 }}
-        onPress={() => {
-          useStore.getState().devClearDatabase();
-          alert('Database reset. Please reload the app.');
-        }}
-      >
-        <Text style={{ color: colors.danger, textDecorationLine: 'underline', fontWeight: 'bold' }}>DEV: Reset All Data</Text>
       </TouchableOpacity>
     </View>
   );

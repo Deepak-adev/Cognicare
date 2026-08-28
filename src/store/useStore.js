@@ -7,16 +7,17 @@ import { InsightService } from '../services/InsightService';
 import { sundowningAnalyzer } from '../services/sundowningAnalyzer';
 
 const MOCK_MEDICATIONS = [
-  { id: 'mock_1', time: '8:00 AM', name: 'Vitamin / Blood Pressure', taken: true },
-  { id: 'mock_2', time: '1:00 PM', name: 'Pain Relief Medicine', taken: true },
+  { id: 'mock_1', time: '9:00 AM', name: 'Vitamin / Blood Pressure', taken: false },
+  { id: 'mock_2', time: '1:00 PM', name: 'Pain Relief Medicine', taken: false },
   { id: 'mock_3', time: '8:00 PM', name: 'Evening Medicine', taken: false },
 ];
 
 const MOCK_TIMELINE_TASKS = [
   { id: 'mock_t1', time: '8:00 AM', title: 'Breakfast', icon: 'Coffee', done: true },
   { id: 'mock_t2', time: '9:00 AM', title: 'Medicine', icon: 'Pill', current: true, navigateTo: 'MedicineReminder' },
-  { id: 'mock_t3', time: '6:00 PM', title: 'Evening Walk', icon: 'Activity', done: false },
-  { id: 'mock_t4', time: '7:00 PM', title: 'Doctor Appointment', icon: 'Star', done: false },
+  { id: 'mock_t3', time: '1:00 PM', title: 'Medicine', icon: 'Pill', done: false, navigateTo: 'MedicineReminder' },
+  { id: 'mock_t4', time: '6:00 PM', title: 'Evening Walk', icon: 'Activity', done: false },
+  { id: 'mock_t5', time: '8:00 PM', title: 'Medicine', icon: 'Pill', done: false, navigateTo: 'MedicineReminder' },
 ];
 
 const MOCK_RECENT_SESSIONS = [
@@ -39,9 +40,16 @@ export const useStore = create((set, get) => ({
   isOffline: false,
   patientSettings: { language: 'English', fontSize: 'Normal', highContrast: false },
   routineAlerts: [],
+  waterIntake: 0,
+  waterGoal: 8,
+  clinicalTests: [
+    { id: 'mock_c1', date: 'Yesterday, 10:00 AM', type: 'Verbal Fluency', data: { score: 14, words: ['dog', 'cat', 'elephant', 'tiger', 'lion', 'bear', 'wolf', 'fox', 'deer', 'rabbit', 'mouse', 'rat', 'horse', 'cow'], category: 'Animals', duration: 60 } },
+    { id: 'mock_c2', date: '3 days ago', type: 'Clock Drawing', data: { timeTaken: 45, hesitationPauses: 3, strokes: 12, interpretation: 'Mild spatial distortion detected in numeral placement.' } }
+  ],
   
   // Advanced Features State
   sundowningRiskWindow: null,
+  wanderAlertActive: false,
   
   setOfflineStatus: (status) => set({ isOffline: status }),
   
@@ -57,10 +65,43 @@ export const useStore = create((set, get) => ({
   },
 
   markMedicationTaken: async (id) => {
+    set((state) => {
+      const updatedMedications = state.medications.map(med => med.id === id ? { ...med, taken: true } : med);
+      const takenMed = updatedMedications.find(m => m.id === id);
+      
+      let updatedTimeline = state.timelineTasks;
+      // Sync logic: match the specific Medicine task by time
+      if (takenMed) {
+        updatedTimeline = updatedTimeline.map(task => 
+          task.title === 'Medicine' && task.time === takenMed.time ? { ...task, done: true, current: false } : task
+        );
+      }
+      
+      // Shift current marker to the next undone task
+      const nextUndoneIndex = updatedTimeline.findIndex(t => !t.done);
+      if (nextUndoneIndex !== -1) {
+        updatedTimeline = updatedTimeline.map((t, idx) => ({ ...t, current: idx === nextUndoneIndex }));
+      }
+
+      return {
+        medications: updatedMedications,
+        timelineTasks: updatedTimeline
+      };
+    });
+    if (get().patient) {
+      PatientProfileService.savePatient({ 
+        ...get().patient, 
+        medications: get().medications,
+        timelineTasks: get().timelineTasks 
+      });
+    }
+  },
+
+  logWaterIntake: async () => {
     set((state) => ({
-      medications: state.medications.map(med => med.id === id ? { ...med, taken: true } : med)
+      waterIntake: Math.min(state.waterIntake + 1, state.waterGoal)
     }));
-    if (get().patient) PatientProfileService.savePatient({ ...get().patient, medications: get().medications });
+    if (get().patient) PatientProfileService.savePatient({ ...get().patient, waterIntake: get().waterIntake });
   },
 
   addTimelineTask: async (task) => {
@@ -128,6 +169,14 @@ export const useStore = create((set, get) => ({
     set({ sundowningRiskWindow: riskWindow });
   },
 
+  triggerRescueProtocol: (isActive) => {
+    set({ wanderAlertActive: isActive });
+    if (isActive) {
+      // In a real app we'd navigate to ConfusionRescueScreen, but for global state we just set the flag
+      // CaregiverDashboard will react to this flag.
+    }
+  },
+
   recordGameSession: async (patientId, gameType, domain, score, accuracy) => {
     const session = {
       id: Date.now().toString(),
@@ -149,8 +198,27 @@ export const useStore = create((set, get) => ({
 
     if (get().patient) {
       await PatientProfileService.savePatient({ ...get().patient, recentSessions: get().recentSessions });
-      // Recalculate stats dynamically
       await get().loadPatientData(patientId);
+    }
+  },
+
+  saveClinicalTest: async (patientId, testType, data) => {
+    const testRecord = {
+      id: `test_${Date.now()}`,
+      date: new Date().toLocaleString(),
+      type: testType,
+      data: data
+    };
+    set((state) => ({
+      clinicalTests: [testRecord, ...state.clinicalTests]
+    }));
+    
+    if (get().patient) {
+      // In a real app we would save this to the DB under patient
+      await PatientProfileService.savePatient({ 
+        ...get().patient, 
+        clinicalTests: get().clinicalTests 
+      });
     }
   },
 
@@ -211,6 +279,25 @@ export const useStore = create((set, get) => ({
       };
     }
 
+    let loadedMeds = patient?.medications?.length > 0 ? patient.medications : MOCK_MEDICATIONS;
+    let loadedTasks = patient?.timelineTasks?.length > 0 ? patient.timelineTasks : MOCK_TIMELINE_TASKS;
+
+    // Force sync for the demo if they have the old unsynced mock data saved in their DB
+    // e.g., if the old medication had 8:00 AM, or if the lengths don't match
+    if (loadedTasks.length !== MOCK_TIMELINE_TASKS.length || (loadedMeds[0] && loadedMeds[0].time === '8:00 AM')) {
+      loadedMeds = MOCK_MEDICATIONS;
+      loadedTasks = MOCK_TIMELINE_TASKS;
+      
+      // Persist the reset immediately
+      if (patient) {
+        PatientProfileService.savePatient({ 
+          ...patient, 
+          medications: loadedMeds,
+          timelineTasks: loadedTasks
+        });
+      }
+    }
+
     set({ 
       patient, 
       cognitiveProfile, 
@@ -219,8 +306,9 @@ export const useStore = create((set, get) => ({
       activityStats, 
       cognitiveFingerprint, 
       recentSessions,
-      medications: patient?.medications?.length > 0 ? patient.medications : MOCK_MEDICATIONS,
-      timelineTasks: patient?.timelineTasks?.length > 0 ? patient.timelineTasks : MOCK_TIMELINE_TASKS
+      medications: loadedMeds,
+      timelineTasks: loadedTasks,
+      waterIntake: patient?.waterIntake || 0
     });
   },
 

@@ -29,22 +29,28 @@ When the application launches (`App.js`), it routes the user to the **Role Selec
 - A clean, vertical timeline showing the patient's daily schedule (Breakfast, Appointments, Evening Walks, etc.).
 - Dynamically controlled and synced from the Caregiver's application.
 
-### B. Medicine Reminders
-- A dedicated screen for tracking daily medications.
-- Requires zero typing: Patients tap a massive **"I TOOK IT"** button, or simply tell the AGUI "I took my medicine."
+### B. Medicine & Hydration Reminders
+- Dedicated tracking for daily medications and water intake.
+- Requires zero typing: Patients tap a massive **"I TOOK IT"** (or **"I DRANK IT"**) button, or simply tell the AGUI "I took my medicine" or "I drank water."
 
 ### C. Leveled Cognitive Games Library
 - A curated library of cognitive exercises tailored to specific domains (Memory, Attention, Recognition, Language).
 - **Leveled System:** Games dynamically adjust their difficulty (Levels 1-3) based on performance to prevent frustration.
 - **AI Adaptive Generation:** An engine capable of creating real-time personalized games based on the patient's background.
 
-### D. "My World" (Familiar World)
+### D. "My World" & Family Voice Time Capsule
 - Displays familiar faces, family relationships, and personal photos to combat memory loss and disorientation.
+- **Family Voice Time Capsule:** Remote family members can record short voice or text messages tied to specific photos or days. The AGUI surfaces these contextually (e.g., "Priya sent you a message — want to hear it?"), fostering active social interaction.
 
 ### E. Confusion Rescue Protocol
 - An emergency screen triggered during severe disorientation (e.g. erratic tapping or saying "I am lost"). The UI strips down to a full-screen, calming view reminding the patient where they are, what time it is, and offering an immediate 1-tap call to their primary caregiver.
 
-### F. Accessibility Settings
+### F. Wander Detection & Geofencing Alerts
+- A home geofence monitors the patient's location using background location tracking.
+- **Safety Trigger:** If the patient's device leaves the safe zone, it automatically triggers the Confusion Rescue Protocol and sends an immediate alert to the primary caregiver.
+- **Contextual Escalation:** If a geofence breach occurs during a flagged sundowning risk window, the system automatically escalates the alert urgency.
+
+### G. Accessibility Settings
 - High Contrast, Large Text modes, and "Ignore Accidental Taps" designed for users with hand tremors.
 
 ## 5. Caregiver App Flow & Features

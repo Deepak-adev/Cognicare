@@ -3,13 +3,13 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useNavigation } from '@react-navigation/native';
 import { globalStyles, colors, Card, Button } from '../components/common';
 import { useStore } from '../store/useStore';
-import { CheckCircle2, Clock, Pill, ChevronLeft } from 'lucide-react-native';
+import { CheckCircle2, Clock, Pill, ChevronLeft, Droplet } from 'lucide-react-native';
 
 export const MedicineReminderScreen = () => {
   const navigation = useNavigation();
   
   // Use global state so Caregiver can monitor in real-time
-  const { medications, markMedicationTaken } = useStore();
+  const { medications, markMedicationTaken, waterIntake, waterGoal, logWaterIntake } = useStore();
 
   return (
     <View style={globalStyles.container}>
@@ -23,6 +23,30 @@ export const MedicineReminderScreen = () => {
       </View>
       
       <ScrollView showsVerticalScrollIndicator={false}>
+        <Card style={{ marginBottom: 30, padding: 24, backgroundColor: '#e0f2fe', borderColor: '#7dd3fc', borderWidth: 2 }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+            <View style={{ width: 56, height: 56, borderRadius: 28, backgroundColor: '#38bdf820', alignItems: 'center', justifyContent: 'center', marginRight: 16 }}>
+              <Droplet color="#0284c7" size={28} />
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ fontSize: 22, fontWeight: '800', color: '#0369a1' }}>Water Intake</Text>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#0ea5e9' }}>{waterIntake} / {waterGoal} glasses today</Text>
+            </View>
+          </View>
+          
+          <TouchableOpacity 
+            style={[styles.actionBtn, { backgroundColor: '#0284c7', shadowColor: '#0284c7' }]}
+            onPress={logWaterIntake}
+            activeOpacity={0.8}
+            disabled={waterIntake >= waterGoal}
+          >
+            <Droplet color="#ffffff" size={24} style={{ marginRight: 8 }} />
+            <Text style={styles.actionBtnText}>
+              {waterIntake >= waterGoal ? 'GOAL MET! 🎉' : 'I DRANK WATER'}
+            </Text>
+          </TouchableOpacity>
+        </Card>
+
         {medications.map((med, index) => {
           const isLast = index === medications.length - 1;
           

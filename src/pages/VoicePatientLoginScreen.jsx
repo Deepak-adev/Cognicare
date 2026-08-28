@@ -44,13 +44,15 @@ export const VoicePatientLoginScreen = () => {
       }
     };
     fetchPatients();
+  }, []);
 
+  useEffect(() => {
     return () => {
       if (recording) {
         recording.stopAndUnloadAsync().catch(() => {});
       }
     };
-  }, []);
+  }, [recording]);
 
   // Pulsing animation for mic button and waveform
   useEffect(() => {

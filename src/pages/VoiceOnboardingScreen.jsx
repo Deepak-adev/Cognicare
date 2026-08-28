@@ -4,7 +4,7 @@ import { globalStyles, colors } from '../components/common';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStore } from '../store/useStore';
 import { Mic, MicOff, CheckCircle2, Sparkles, BrainCircuit, ArrowRight } from 'lucide-react-native';
-import * as Speech from 'expo-speech';
+import TTSService from '../services/TTSService';
 import { Audio } from 'expo-av';
 import { GroqService } from '../services/GroqService';
 
@@ -44,7 +44,7 @@ export const VoiceOnboardingScreen = () => {
     
     setChatHistory([{ role: 'ai', text: greeting }]);
     
-    Speech.speak(greeting, {
+    TTSService.speak(greeting, {
       language: speechLang,
       rate: 0.9,
       pitch: 1,
@@ -56,10 +56,15 @@ export const VoiceOnboardingScreen = () => {
     setIsSpeaking(true);
 
     return () => {
-      Speech.stop();
-      if (recording) recording.stopAndUnloadAsync();
+      TTSService.stop();
     };
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (recording) recording.stopAndUnloadAsync().catch(() => {});
+    };
+  }, [recording]);
 
   useEffect(() => {
     if (isListening) {
@@ -156,7 +161,7 @@ export const VoiceOnboardingScreen = () => {
       
       setDetectedLangCode(newLangCode);
       
-      Speech.speak(aiReply, {
+      TTSService.speak(aiReply, {
         language: newLangCode,
         rate: 0.9,
         pitch: 1,
@@ -174,7 +179,7 @@ export const VoiceOnboardingScreen = () => {
     if (detectedLangCode === 'ta-IN') closingText = `உங்களது அழகான கதைகளைப் பகிர்ந்து கொண்டதற்கு மிக்க நன்றி, ${initialName}. உங்கள் கணக்கு தயாராகிவிட்டது!`;
     if (detectedLangCode === 'as-IN') closingText = `আপোনাৰ ধুনীয়া কাহিনীবোৰ শ্বেয়াৰ কৰাৰ বাবে বহুত ধন্যবাদ, ${initialName}। আপোনাৰ একাউণ্ট সাজু হৈছে!`;
     
-    Speech.speak(closingText, { language: detectedLangCode, rate: 0.9 });
+    TTSService.speak(closingText, { language: detectedLangCode, rate: 0.9 });
     
     // Extract profile quietly in the background
     const extractedProfile = await GroqService.extractProfile(finalHistory, initialName);

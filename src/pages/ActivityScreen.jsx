@@ -35,8 +35,8 @@ const MemoryGame = ({ data, onComplete }) => {
               <Text key={i} style={{ fontSize: 60 }}>{obj}</Text>
             ))}
           </View>
-          <Button onPress={() => setStep(1)} style={{ width: '100%', marginTop: 20 }} variant="primary">
-            {t('rememberThem')}
+          <Button onPress={() => setStep(1)} style={{ width: '100%', marginTop: 20, shadowColor: colors.primary, shadowOffset: { width: 0, height: 8 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6, paddingVertical: 18, borderRadius: 20 }} variant="primary">
+            <Text style={{ fontSize: 18, fontWeight: '800', color: '#ffffff', letterSpacing: 0.5 }}>{t('rememberThem') || 'I remember them'}</Text>
           </Button>
         </>
       )}

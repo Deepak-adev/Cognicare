@@ -6,7 +6,7 @@ import {
   Animated,
   ActivityIndicator,
 } from 'react-native';
-import * as Speech from 'expo-speech';
+import TTSService from '../services/TTSService';
 import { Audio } from 'expo-av';
 import { Mic, Square } from 'lucide-react-native';
 import { sendMessageToGemini } from '../services/geminiService';
@@ -79,7 +79,7 @@ export const GeminiChatButton = () => {
     if (recording) return;
     
     // Stop any ongoing speech when the user starts speaking
-    Speech.stop();
+    TTSService.stop();
 
     try {
       await Audio.requestPermissionsAsync();
@@ -241,11 +241,11 @@ export const GeminiChatButton = () => {
       }
 
       // Voice output
-      Speech.speak(aiText);
+      TTSService.speak(aiText);
 
     } catch (err) {
       console.error('[AGUI] Error processing command:', err);
-      Speech.speak("I'm sorry, I couldn't process that right now.");
+      TTSService.speak("I'm sorry, I couldn't process that right now.");
     } finally {
       setIsLoading(false);
     }
@@ -290,7 +290,7 @@ export const GeminiChatButton = () => {
 const styles = StyleSheet.create({
   fabContainer: {
     position: 'absolute',
-    bottom: 95, // Above the bottom tab bar
+    bottom: 110, // Above the bottom tab bar and card edges
     right: 18,  // Right aligned
     alignItems: 'center',
     justifyContent: 'center',

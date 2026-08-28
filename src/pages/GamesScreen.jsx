@@ -1,12 +1,23 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Brain, Crosshair, Clock, MessageCircle, Star } from 'lucide-react-native';
+import { Brain, Crosshair, Clock, MessageCircle, Star, Activity } from 'lucide-react-native';
 import { useTheme } from '../hooks/useTheme';
 import { colors as defaultColors } from '../components/common';
 import { gamesData } from '../data/gamesData';
 
 const GAME_CATEGORIES = [
+  {
+    title: 'Clinical Assessments',
+    icon: Activity,
+    color: '#8b5cf6', // violet
+    bg: '#f5f3ff',
+    type: 'clinical',
+    levels: [
+      { title: 'Clock Drawing Test', route: 'ClockDrawingTest' },
+      { title: 'Verbal Fluency Test', route: 'VerbalFluencyTest' }
+    ]
+  },
   {
     title: 'Memory Mastery',
     icon: Brain,
@@ -45,8 +56,12 @@ export const GamesScreen = () => {
   const navigation = useNavigation();
   const { t, fontScale, colors, globalStyles } = useTheme();
 
-  const handlePlayGame = (type, levelData) => {
-    navigation.navigate('Activity', { type: type, levelData: levelData });
+  const handlePlayGame = (category, lvl) => {
+    if (category.type === 'clinical') {
+      navigation.navigate(lvl.route);
+    } else {
+      navigation.navigate('Activity', { type: category.type, levelData: lvl });
+    }
   };
 
   return (
@@ -77,12 +92,14 @@ export const GamesScreen = () => {
                 <TouchableOpacity 
                   key={lIdx} 
                   style={[styles.gameCard, { borderColor: category.color + '40' }]} 
-                  onPress={() => handlePlayGame(category.type, lvl)}
+                  onPress={() => handlePlayGame(category, lvl)}
                   activeOpacity={0.8}
                 >
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                     <View style={[styles.badge, { backgroundColor: category.bg }]}>
-                      <Text style={[styles.badgeText, { color: category.color }]}>Level {lvl.level}</Text>
+                      <Text style={[styles.badgeText, { color: category.color }]}>
+                        {category.type === 'clinical' ? 'Clinical Test' : `Level ${lvl.level}`}
+                      </Text>
                     </View>
                     <Star color={category.color} size={20} fill={category.bg} />
                   </View>

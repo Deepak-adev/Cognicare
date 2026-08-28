@@ -2,9 +2,9 @@ import React, { useState } from 'react';
 import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useStore } from '../store/useStore';
 import { Card } from '../components/common';
-import { Heart, Home, MapPin, Camera, Mic, X, Sparkles, Map, Globe } from 'lucide-react-native';
+import { Heart, Home, MapPin, Camera, Mic, X, Sparkles, Map, Globe, PlayCircle } from 'lucide-react-native';
 import { useTheme } from '../hooks/useTheme';
-import * as Speech from 'expo-speech';
+import TTSService from '../services/TTSService';
 import { reminiscenceService } from '../services/reminiscenceService';
 
 export const FamiliarWorldScreen = () => {
@@ -15,7 +15,7 @@ export const FamiliarWorldScreen = () => {
   const [isGenerating, setIsGenerating] = useState(false);
 
   const memories = [
-    { id: 1, type: 'family', title: 'Priya', subtitle: 'Daughter', icon: '👩🏽', color: '#fff0f2', prompt: "This is your daughter Priya. Do you remember when she visited last week?" },
+    { id: 1, type: 'family', title: 'Priya', subtitle: 'Daughter', icon: '👩🏽', color: '#fff0f2', prompt: "This is your daughter Priya. Do you remember when she visited last week?", voiceMessage: "Hi Appa! It's Priya. Just wanted to say I love you and I'm coming to see you this Sunday." },
     { id: 2, type: 'family', title: 'Ananya', subtitle: 'Granddaughter', icon: '👧🏽', color: '#fff0f2', prompt: "Your granddaughter Ananya loves drawing. She made you a card recently." },
     { id: 3, type: 'place', title: 'Guwahati', subtitle: 'Hometown', icon: '🏠', color: '#f0fdf4', prompt: "You spent many years in Guwahati. What was your favorite place to visit there?" },
     { id: 4, type: 'culture', title: 'Bihu Festival', subtitle: 'Tradition', icon: '🌾', color: '#fffbeb', prompt: "Bihu is such a beautiful festival. Did you usually make pitha during Bihu?" },
@@ -39,12 +39,17 @@ export const FamiliarWorldScreen = () => {
     setIsGenerating(false);
 
     setSelectedMemory({ ...memory, dynamicPrompt: narration });
-    Speech.speak(narration, { language: 'en-US', rate: 0.9, pitch: 1 });
+    TTSService.speak(narration, { language: 'en-US', rate: 0.9, pitch: 1 });
   };
 
   const closeMemory = () => {
-    Speech.stop();
+    TTSService.stop();
     setSelectedMemory(null);
+  };
+
+  const playVoiceMessage = () => {
+    TTSService.stop();
+    TTSService.speak(selectedMemory.voiceMessage, { language: 'en-IN', rate: 0.9, pitch: 1 });
   };
 
   return (
@@ -73,6 +78,11 @@ export const FamiliarWorldScreen = () => {
             >
               <View style={[styles.iconContainer, { backgroundColor: memory.color }]}>
                 <Text style={{ fontSize: 52 * fontScale }}>{memory.icon}</Text>
+                {memory.voiceMessage && (
+                  <View style={{ position: 'absolute', top: -5, right: -5, backgroundColor: colors.accent, borderRadius: 20, padding: 4 }}>
+                    <PlayCircle color="#ffffff" size={24} />
+                  </View>
+                )}
               </View>
               <Text style={{ fontSize: 22 * fontScale, fontWeight: '900', color: '#1e293b', textAlign: 'center' }}>
                 {memory.title}
@@ -102,18 +112,25 @@ export const FamiliarWorldScreen = () => {
             <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
               <Sparkles color={colors.primary} size={24} style={{ marginRight: 8 }} />
               <Text style={{ fontSize: 24 * fontScale, fontWeight: '900', color: colors.primary, textAlign: 'center' }}>
-                AI Reminiscence Mode
+                {selectedMemory?.voiceMessage ? "Family Voice Time Capsule" : "AI Reminiscence Mode"}
               </Text>
             </View>
 
             <Text style={{ fontSize: 24 * fontScale, color: colors.textMain, textAlign: 'center', fontWeight: '600', lineHeight: 34, marginBottom: 32 }}>
-              {isGenerating ? "Thinking of a warm memory..." : `"${selectedMemory?.dynamicPrompt || selectedMemory?.prompt}"`}
+              {selectedMemory?.voiceMessage ? `${selectedMemory?.title} sent you a message — want to hear it?` : (isGenerating ? "Thinking of a warm memory..." : `"${selectedMemory?.dynamicPrompt || selectedMemory?.prompt}"`)}
             </Text>
 
-            <TouchableOpacity style={styles.micBtn}>
-              <Mic color="#ffffff" size={32} />
-              <Text style={{ color: '#ffffff', fontSize: 20 * fontScale, fontWeight: '800', marginLeft: 12 }}>Hold to Reply</Text>
-            </TouchableOpacity>
+            {selectedMemory?.voiceMessage ? (
+              <TouchableOpacity style={[styles.micBtn, { backgroundColor: colors.accent, shadowColor: colors.accent }]} onPress={playVoiceMessage}>
+                <PlayCircle color="#ffffff" size={32} />
+                <Text style={{ color: '#ffffff', fontSize: 20 * fontScale, fontWeight: '800', marginLeft: 12 }}>Listen to Message</Text>
+              </TouchableOpacity>
+            ) : (
+              <TouchableOpacity style={styles.micBtn}>
+                <Mic color="#ffffff" size={32} />
+                <Text style={{ color: '#ffffff', fontSize: 20 * fontScale, fontWeight: '800', marginLeft: 12 }}>Hold to Reply</Text>
+              </TouchableOpacity>
+            )}
           </View>
         </View>
       </Modal>

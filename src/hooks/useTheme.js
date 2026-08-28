@@ -1,6 +1,6 @@
 import { useStore } from '../store/useStore';
 import { StyleSheet } from 'react-native';
-import * as Speech from 'expo-speech';
+import TTSService from '../services/TTSService';
 import { translate } from '../utils/i18n';
 
 // Base Colors
@@ -89,7 +89,7 @@ export const useTheme = () => {
 
   const speak = (text) => {
     if (patientSettings?.voiceFeedback) {
-      Speech.speak(text);
+      TTSService.speak(text);
     }
   };
 
