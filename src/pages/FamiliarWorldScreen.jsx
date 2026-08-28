@@ -14,13 +14,9 @@ export const FamiliarWorldScreen = () => {
   const [selectedMemory, setSelectedMemory] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
-  const memories = [
-    { id: 1, type: 'family', title: 'Priya', subtitle: 'Daughter', icon: '👩🏽', color: '#fff0f2', prompt: "This is your daughter Priya. Do you remember when she visited last week?" },
-    { id: 2, type: 'family', title: 'Ananya', subtitle: 'Granddaughter', icon: '👧🏽', color: '#fff0f2', prompt: "Your granddaughter Ananya loves drawing. She made you a card recently." },
-    { id: 3, type: 'place', title: 'Guwahati', subtitle: 'Hometown', icon: '🏠', color: '#f0fdf4', prompt: "You spent many years in Guwahati. What was your favorite place to visit there?" },
-    { id: 4, type: 'culture', title: 'Bihu Festival', subtitle: 'Tradition', icon: '🌾', color: '#fffbeb', prompt: "Bihu is such a beautiful festival. Did you usually make pitha during Bihu?" },
-    { id: 5, type: 'culture', title: 'Assamese Japi', subtitle: 'Cultural Item', icon: '👒', color: '#fffbeb', prompt: "The Japi is a proud symbol of Assam. Did you have one in your home?" },
-    { id: 6, type: 'memory', title: 'Old House', subtitle: 'Memory', icon: '🏡', color: '#f3e8ff', prompt: "This is your first house. Who were your neighbors?" },
+  const memories = (patient?.memories && patient.memories.length > 0) ? patient.memories : [
+    { id: 1, type: 'family', title: 'Loved One', subtitle: 'Family', icon: '👩🏽', color: '#fff0f2', prompt: "This is your loved one. They care about you very much." },
+    { id: 2, type: 'place', title: 'Home', subtitle: 'Safe Place', icon: '🏠', color: '#f0fdf4', prompt: "You are safe and at home." }
   ];
 
   const handleMemoryPress = async (memory) => {
