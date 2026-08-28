@@ -1,79 +1,183 @@
-import React from 'react';
-import { ScrollView, View, Text, StyleSheet, Image, TouchableOpacity } from 'react-native';
+import React, { useState } from 'react';
+import { ScrollView, View, Text, StyleSheet, TouchableOpacity, Modal } from 'react-native';
 import { useStore } from '../store/useStore';
 import { Card } from '../components/common';
-import { Heart, Home, Star, Sparkles } from 'lucide-react-native';
+import { Heart, Home, MapPin, Camera, Mic, X, Sparkles, Map, Globe } from 'lucide-react-native';
 import { useTheme } from '../hooks/useTheme';
+import * as Speech from 'expo-speech';
 
 export const FamiliarWorldScreen = () => {
   const { patient } = useStore();
   const { t, fontScale, colors, globalStyles } = useTheme();
 
+  const [selectedMemory, setSelectedMemory] = useState(null);
+
+  const memories = [
+    { id: 1, type: 'family', title: 'Priya', subtitle: 'Daughter', icon: '👩🏽', color: '#fff0f2', prompt: "This is your daughter Priya. Do you remember when she visited last week?" },
+    { id: 2, type: 'family', title: 'Ananya', subtitle: 'Granddaughter', icon: '👧🏽', color: '#fff0f2', prompt: "Your granddaughter Ananya loves drawing. She made you a card recently." },
+    { id: 3, type: 'place', title: 'Guwahati', subtitle: 'Hometown', icon: '🏠', color: '#f0fdf4', prompt: "You spent many years in Guwahati. What was your favorite place to visit there?" },
+    { id: 4, type: 'culture', title: 'Bihu Festival', subtitle: 'Tradition', icon: '🌾', color: '#fffbeb', prompt: "Bihu is such a beautiful festival. Did you usually make pitha during Bihu?" },
+    { id: 5, type: 'culture', title: 'Assamese Japi', subtitle: 'Cultural Item', icon: '👒', color: '#fffbeb', prompt: "The Japi is a proud symbol of Assam. Did you have one in your home?" },
+    { id: 6, type: 'memory', title: 'Old House', subtitle: 'Memory', icon: '🏡', color: '#f3e8ff', prompt: "This is your first house. Who were your neighbors?" },
+  ];
+
+  const handleMemoryPress = (memory) => {
+    setSelectedMemory(memory);
+    Speech.speak(memory.prompt, { language: 'en-US', rate: 0.9, pitch: 1 });
+  };
+
+  const closeMemory = () => {
+    Speech.stop();
+    setSelectedMemory(null);
+  };
+
   return (
-    <ScrollView style={[globalStyles.container, { backgroundColor: '#fdf8f5' }]} showsVerticalScrollIndicator={false}>
-      <View style={{ alignItems: 'center', marginVertical: 32 }}>
-        <Text style={{ fontSize: 60 * fontScale, marginBottom: 16 }}>🌍</Text>
-        <Text style={[globalStyles.headerText, { color: colors.accent, textAlign: 'center' }]}>{t('myWorld')}</Text>
-        <Text style={[globalStyles.textMuted, { textAlign: 'center', fontSize: 18 * fontScale, marginTop: 8 }]}>
-          {t('familiarWorldSubtitle') || 'A space filled with the people and places you love.'}
-        </Text>
-      </View>
-
-      <Card style={{ backgroundColor: '#fff0f2', borderColor: '#ffe4e6', borderWidth: 2 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-          <Heart color="#f43f5e" size={32} />
-          <Text style={{ fontSize: 24 * fontScale, fontWeight: '800', color: colors.textMain, marginLeft: 12 }}>{t('myFamily') || 'My Family'}</Text>
+    <View style={{ flex: 1, backgroundColor: '#f8fafc' }}>
+      <ScrollView style={globalStyles.container} showsVerticalScrollIndicator={false}>
+        
+        <View style={{ alignItems: 'center', marginVertical: 40 }}>
+          <View style={{ backgroundColor: colors.primary + '15', padding: 24, borderRadius: 40, marginBottom: 20 }}>
+            <Globe color={colors.primary} size={48} />
+          </View>
+          <Text style={[globalStyles.headerText, { color: colors.primaryDark || '#1e3a8a', textAlign: 'center', fontSize: 36 * fontScale }]}>
+            {t('myWorld') || 'Personal World'}
+          </Text>
+          <Text style={[globalStyles.textMuted, { textAlign: 'center', fontSize: 18 * fontScale, marginTop: 12, paddingHorizontal: 20, lineHeight: 26 }]}>
+            A culturally aware memory system, curated by your family.
+          </Text>
         </View>
-        <View style={styles.personCard}>
-          <Text style={{ fontSize: 40 * fontScale, marginRight: 16 }}>👩🏽</Text>
-          <View>
-            <Text style={{ fontSize: 22 * fontScale, fontWeight: '700', color: colors.textMain }}>Priya</Text>
-            <Text style={{ fontSize: 18 * fontScale, color: colors.textMuted }}>{t('daughter') || 'Daughter'}</Text>
+
+        <View style={styles.grid}>
+          {memories.map((memory) => (
+            <TouchableOpacity
+              key={memory.id}
+              style={[styles.gridItem, { backgroundColor: '#ffffff' }]}
+              onPress={() => handleMemoryPress(memory)}
+              activeOpacity={0.7}
+            >
+              <View style={[styles.iconContainer, { backgroundColor: memory.color }]}>
+                <Text style={{ fontSize: 52 * fontScale }}>{memory.icon}</Text>
+              </View>
+              <Text style={{ fontSize: 22 * fontScale, fontWeight: '900', color: '#1e293b', textAlign: 'center' }}>
+                {memory.title}
+              </Text>
+              <Text style={{ fontSize: 16 * fontScale, color: '#64748b', textAlign: 'center', marginTop: 4, fontWeight: '600' }}>
+                {memory.subtitle}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <View style={{ height: 60 }} />
+      </ScrollView>
+
+      {/* AI Reminiscence Modal */}
+      <Modal visible={!!selectedMemory} transparent animationType="slide">
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <TouchableOpacity style={styles.closeBtn} onPress={closeMemory}>
+              <X color="#94a3b8" size={32} />
+            </TouchableOpacity>
+            
+            <Text style={{ fontSize: 80, textAlign: 'center', marginVertical: 20 }}>
+              {selectedMemory?.icon}
+            </Text>
+            
+            <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center', marginBottom: 16 }}>
+              <Sparkles color={colors.primary} size={24} style={{ marginRight: 8 }} />
+              <Text style={{ fontSize: 24 * fontScale, fontWeight: '900', color: colors.primary, textAlign: 'center' }}>
+                AI Reminiscence Mode
+              </Text>
+            </View>
+
+            <Text style={{ fontSize: 24 * fontScale, color: colors.textMain, textAlign: 'center', fontWeight: '600', lineHeight: 34, marginBottom: 32 }}>
+              "{selectedMemory?.prompt}"
+            </Text>
+
+            <TouchableOpacity style={styles.micBtn}>
+              <Mic color="#ffffff" size={32} />
+              <Text style={{ color: '#ffffff', fontSize: 20 * fontScale, fontWeight: '800', marginLeft: 12 }}>Hold to Reply</Text>
+            </TouchableOpacity>
           </View>
         </View>
-        <View style={[styles.personCard, { borderBottomWidth: 0, paddingBottom: 0 }]}>
-          <Text style={{ fontSize: 40 * fontScale, marginRight: 16 }}>👧🏽</Text>
-          <View>
-            <Text style={{ fontSize: 22 * fontScale, fontWeight: '700', color: colors.textMain }}>Ananya</Text>
-            <Text style={{ fontSize: 18 * fontScale, color: colors.textMuted }}>{t('granddaughter') || 'Granddaughter'}</Text>
-          </View>
-        </View>
-      </Card>
-
-      <Card style={{ backgroundColor: '#f0fdf4', borderColor: '#dcfce7', borderWidth: 2 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-          <Home color="#22c55e" size={32} />
-          <Text style={{ fontSize: 24 * fontScale, fontWeight: '800', color: colors.textMain, marginLeft: 12 }}>{t('myHome') || 'My Home'}</Text>
-        </View>
-        <Text style={{ fontSize: 20 * fontScale, color: colors.textMain, fontWeight: '600' }}>
-          {patient?.location || 'Guwahati, Assam'}
-        </Text>
-      </Card>
-
-      <Card style={{ backgroundColor: '#fffbeb', borderColor: '#fef3c7', borderWidth: 2, marginBottom: 40 }}>
-        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
-          <Star color="#f59e0b" size={32} />
-          <Text style={{ fontSize: 24 * fontScale, fontWeight: '800', color: colors.textMain, marginLeft: 12 }}>{t('myFavourites') || 'My Favourites'}</Text>
-        </View>
-        {patient?.interests?.map((interest, idx) => (
-          <View key={idx} style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 12 }}>
-            <Sparkles color="#f59e0b" size={20} style={{ marginRight: 10 }} />
-            <Text style={{ fontSize: 20 * fontScale, color: colors.textMain, fontWeight: '600' }}>{interest}</Text>
-          </View>
-        ))}
-      </Card>
-
-      <View style={{ height: 60 }} />
-    </ScrollView>
+      </Modal>
+    </View>
   );
 };
 
 const styles = StyleSheet.create({
-  personCard: {
+  grid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+  },
+  gridItem: {
+    width: '48%',
+    borderRadius: 32,
+    padding: 24,
+    alignItems: 'center',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(0,0,0,0.03)',
+    shadowColor: '#334155',
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.08,
+    shadowRadius: 24,
+    elevation: 4,
+  },
+  iconContainer: {
+    width: 90,
+    height: 90,
+    borderRadius: 45,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 8,
+    elevation: 2,
+  },
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(15, 23, 42, 0.7)',
+    justifyContent: 'flex-end',
+  },
+  modalContent: {
+    backgroundColor: '#ffffff',
+    borderTopLeftRadius: 32,
+    borderTopRightRadius: 32,
+    padding: 32,
+    paddingBottom: 60,
+    alignItems: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: -10 },
+    shadowOpacity: 0.1,
+    shadowRadius: 20,
+    elevation: 20,
+  },
+  closeBtn: {
+    position: 'absolute',
+    top: 24,
+    right: 24,
+    padding: 8,
+    backgroundColor: '#f1f5f9',
+    borderRadius: 20,
+  },
+  micBtn: {
+    backgroundColor: '#3b82f6',
     flexDirection: 'row',
     alignItems: 'center',
-    paddingVertical: 12,
-    borderBottomWidth: 1,
-    borderBottomColor: 'rgba(0,0,0,0.05)'
+    justifyContent: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 32,
+    borderRadius: 32,
+    width: '100%',
+    shadowColor: '#3b82f6',
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.4,
+    shadowRadius: 16,
+    elevation: 8,
   }
 });

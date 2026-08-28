@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
 import { useNavigation } from '@react-navigation/native';
-import { Brain, Crosshair, Clock, MessageCircle } from 'lucide-react-native';
+import { Brain, Crosshair, Clock, MessageCircle, Star } from 'lucide-react-native';
 import { useTheme } from '../hooks/useTheme';
 import { colors as defaultColors } from '../components/common';
+import { gamesData } from '../data/gamesData';
 
 const GAME_CATEGORIES = [
   {
@@ -12,14 +13,7 @@ const GAME_CATEGORIES = [
     color: '#3b82f6', // blue
     bg: '#eff6ff',
     type: 'memory',
-    games: [
-      { name: 'Where are my keys?', difficulty: 'Easy' },
-      { name: 'Family Face Match', difficulty: 'Medium' },
-      { name: 'Remember the Sequence', difficulty: 'Medium' },
-      { name: 'Grocery List Recall', difficulty: 'Hard' },
-      { name: 'Photo Storyteller', difficulty: 'Medium' },
-      { name: 'Name that Tune', difficulty: 'Easy' }
-    ]
+    levels: gamesData.memory
   },
   {
     title: 'Attention Tracker',
@@ -27,14 +21,7 @@ const GAME_CATEGORIES = [
     color: '#ef4444', // red
     bg: '#fef2f2',
     type: 'attention',
-    games: [
-      { name: 'Find the Red Apple', difficulty: 'Easy' },
-      { name: 'Sort the Shapes', difficulty: 'Medium' },
-      { name: 'Catch the Balloon', difficulty: 'Hard' },
-      { name: 'Color Matching', difficulty: 'Easy' },
-      { name: 'Spot the Difference', difficulty: 'Medium' },
-      { name: 'Track the Moving Dot', difficulty: 'Hard' }
-    ]
+    levels: gamesData.attention
   },
   {
     title: 'Daily Routine',
@@ -42,29 +29,15 @@ const GAME_CATEGORIES = [
     color: '#22c55e', // green
     bg: '#f0fdf4',
     type: 'routine',
-    games: [
-      { name: 'Morning Routine Check', difficulty: 'Easy' },
-      { name: 'What Time is it?', difficulty: 'Medium' },
-      { name: 'Next Meal Guesser', difficulty: 'Easy' },
-      { name: 'Medication Organizer', difficulty: 'Medium' },
-      { name: 'Bedtime Steps', difficulty: 'Medium' },
-      { name: 'Event Sequencer', difficulty: 'Hard' }
-    ]
+    levels: gamesData.routine
   },
   {
     title: 'Language & Words',
     icon: MessageCircle,
     color: '#f59e0b', // amber
     bg: '#fffbeb',
-    type: 'language', // Reusing the memory engine or another simple one for now
-    games: [
-      { name: 'Name the Object', difficulty: 'Easy' },
-      { name: 'Word Association', difficulty: 'Medium' },
-      { name: 'Complete the Sentence', difficulty: 'Medium' },
-      { name: 'Rhyme Time', difficulty: 'Easy' },
-      { name: 'Spell your Name', difficulty: 'Easy' },
-      { name: 'Story Completion', difficulty: 'Hard' }
-    ]
+    type: 'language',
+    levels: gamesData.language
   }
 ];
 
@@ -72,19 +45,17 @@ export const GamesScreen = () => {
   const navigation = useNavigation();
   const { t, fontScale, colors, globalStyles } = useTheme();
 
-  const handlePlayGame = (type, gameName) => {
-    // We map 'language' back to 'routine' for the hackathon prototype engine
-    const engineType = type === 'language' ? 'routine' : type;
-    navigation.navigate('Activity', { type: engineType, title: gameName });
+  const handlePlayGame = (type, levelData) => {
+    navigation.navigate('Activity', { type: type, levelData: levelData });
   };
 
   return (
     <ScrollView style={[globalStyles.container, { backgroundColor: '#f8fafc' }]} showsVerticalScrollIndicator={false}>
       
       <View style={{ marginBottom: 32, marginTop: 16 }}>
-        <Text style={[globalStyles.headerText, { fontSize: 32 * fontScale }]}>{t('activityLibrary') || 'Activity Library'}</Text>
+        <Text style={[globalStyles.headerText, { fontSize: 32 * fontScale }]}>{t('activityLibrary') || 'Cognitive Therapy'}</Text>
         <Text style={{ fontSize: 18 * fontScale, color: colors.textMuted, marginTop: 8 }}>
-          {t('cognitiveExercises') || '24 personalized cognitive exercises.'}
+          {t('cognitiveExercises') || 'Leveled exercises tailored for you.'}
         </Text>
       </View>
 
@@ -101,33 +72,31 @@ export const GamesScreen = () => {
               </Text>
             </View>
 
-            <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ overflow: 'visible' }}>
-              <View style={{ flexDirection: 'row', gap: 16, paddingRight: 20 }}>
-                {category.games.map((game, gameIdx) => (
-                  <TouchableOpacity 
-                    key={gameIdx} 
-                    style={[styles.gameCard, { borderColor: category.bg }]}
-                    onPress={() => handlePlayGame(category.type, game.name)}
-                    activeOpacity={0.8}
-                  >
-                    <View style={{ flex: 1 }}>
-                      <Text style={[styles.gameTitle, { color: colors.textMain, fontSize: 22 * fontScale }]} numberOfLines={2}>{t(game.name) || game.name}</Text>
-                      <View style={{ backgroundColor: category.bg, paddingHorizontal: 12, paddingVertical: 6, borderRadius: 12, alignSelf: 'flex-start', marginTop: 12 }}>
-                        <Text style={{ color: category.color, fontWeight: '700', fontSize: 13 * fontScale }}>{t(game.difficulty) || game.difficulty}</Text>
-                      </View>
+            <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 16, paddingRight: 24 }}>
+              {category.levels.map((lvl, lIdx) => (
+                <TouchableOpacity 
+                  key={lIdx} 
+                  style={[styles.gameCard, { borderColor: category.color + '40' }]} 
+                  onPress={() => handlePlayGame(category.type, lvl)}
+                  activeOpacity={0.8}
+                >
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
+                    <View style={[styles.badge, { backgroundColor: category.bg }]}>
+                      <Text style={[styles.badgeText, { color: category.color }]}>Level {lvl.level}</Text>
                     </View>
-                    <View style={[styles.playBtn, { backgroundColor: category.bg }]}>
-                      <Text style={{ color: category.color, fontWeight: '800', fontSize: 16 * fontScale }}>{t('playNow') || 'PLAY NOW'}</Text>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </View>
+                    <Star color={category.color} size={20} fill={category.bg} />
+                  </View>
+                  <Text style={[styles.gameTitle, { fontSize: 18 * fontScale, color: colors.textMain }]} numberOfLines={2}>
+                    {t(lvl.title) || lvl.title}
+                  </Text>
+                </TouchableOpacity>
+              ))}
             </ScrollView>
           </View>
         );
       })}
       
-      <View style={{ height: 40 }} />
+      <View style={{ height: 60 }} />
     </ScrollView>
   );
 };
@@ -141,8 +110,8 @@ const styles = StyleSheet.create({
   gameCard: {
     backgroundColor: '#ffffff',
     width: 220,
-    height: 200,
-    padding: 24,
+    height: 180,
+    padding: 20,
     borderRadius: 32,
     borderWidth: 2,
     shadowColor: '#0f172a',
@@ -150,19 +119,22 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.04,
     shadowRadius: 24,
     elevation: 5,
-    justifyContent: 'space-between'
+    justifyContent: 'flex-start'
+  },
+  badge: {
+    paddingHorizontal: 12,
+    paddingVertical: 4,
+    borderRadius: 12,
+  },
+  badgeText: {
+    fontWeight: '800',
+    fontSize: 14
   },
   gameTitle: {
     fontSize: 22,
     fontWeight: '800',
     color: defaultColors.textMain,
-    lineHeight: 28
-  },
-  playBtn: {
-    paddingVertical: 12,
-    borderRadius: 20,
-    alignItems: 'center',
-    flexDirection: 'row',
-    justifyContent: 'center'
+    lineHeight: 28,
+    marginTop: 8
   }
 });

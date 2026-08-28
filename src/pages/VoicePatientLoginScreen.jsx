@@ -22,6 +22,7 @@ export const VoicePatientLoginScreen = () => {
   const [waveAnim3] = useState(new Animated.Value(15));
   const [waveAnim4] = useState(new Animated.Value(40));
   const [waveAnim5] = useState(new Animated.Value(25));
+  const [selectedLang, setSelectedLang] = useState('en-US');
   const inputRef = useRef(null);
   const recognitionRef = useRef(null);
 
@@ -40,7 +41,7 @@ export const VoicePatientLoginScreen = () => {
     console.log('==================================================');
 
     // Register native Voice listeners if available
-    if (Voice && typeof Voice.onSpeechResults === 'function') {
+    if (Platform.OS !== 'web' && Voice && typeof Voice.onSpeechResults === 'function') {
       Voice.onSpeechStart = () => {
         console.log('[Voice Native] Speech recognition started via device mic');
       };
@@ -70,7 +71,7 @@ export const VoicePatientLoginScreen = () => {
     fetchPatients();
 
     return () => {
-      if (Voice && typeof Voice.destroy === 'function') {
+      if (Platform.OS !== 'web' && Voice && typeof Voice.destroy === 'function') {
         Voice.destroy().then(Voice.removeAllListeners);
       }
     };
@@ -179,7 +180,7 @@ export const VoicePatientLoginScreen = () => {
           recognitionRef.current = recognition;
           recognition.continuous = false; // Auto stop when phrase completes
           recognition.interimResults = true;
-          recognition.lang = 'en-US';
+          recognition.lang = selectedLang === 'tanglish' ? 'en-IN' : selectedLang;
 
           recognition.onstart = () => {
             console.log('[SpeechRec Event] recognition.onstart - Speech recognition engine STARTED listening audio.');
@@ -235,9 +236,9 @@ export const VoicePatientLoginScreen = () => {
       } else {
         // Native device mic via @react-native-voice/voice
         try {
-          if (Voice && typeof Voice.start === 'function') {
+          if (Platform.OS !== 'web' && Voice && typeof Voice.start === 'function') {
             console.log('[Voice Native] Starting native device mic speech recognition...');
-            await Voice.start('en-US');
+            await Voice.start(selectedLang === 'tanglish' ? 'en-IN' : selectedLang);
           } else {
             console.warn('[SpeechRec Mobile] Native voice module unavailable in current environment.');
           }
@@ -275,7 +276,8 @@ export const VoicePatientLoginScreen = () => {
         });
       }, 1200);
     } else {
-      console.error('[VoiceLogin] Failed to match or create patient for:', spokenText);
+      console.log('[VoiceLogin] Patient not found for:', spokenText, 'Navigating to Voice Onboarding...');
+      navigation.navigate('VoiceOnboarding', { spokenName: spokenText.trim(), lang: selectedLang });
     }
   };
 
@@ -445,8 +447,33 @@ export const VoicePatientLoginScreen = () => {
       </View>
 
       {/* Footer Alternative */}
-      <View style={{ marginBottom: 24, alignItems: 'center' }}>
-        <TouchableOpacity onPress={() => navigation.navigate('CaregiverStack')}>
+      <View style={{ flex: 1, alignItems: 'center', justifyContent: 'center' }}>
+
+        {/* Language Selector */}
+        <View style={{ flexDirection: 'row', justifyContent: 'center', marginBottom: 30, gap: 10 }}>
+          {['en-US', 'ta-IN', 'tanglish'].map((lang) => (
+            <TouchableOpacity
+              key={lang}
+              onPress={() => setSelectedLang(lang)}
+              style={{
+                paddingHorizontal: 16,
+                paddingVertical: 8,
+                borderRadius: 20,
+                backgroundColor: selectedLang === lang ? '#10b981' : '#f1f5f9',
+              }}
+            >
+              <Text style={{ 
+                color: selectedLang === lang ? '#fff' : '#64748b', 
+                fontWeight: '600',
+                textTransform: 'capitalize' 
+              }}>
+                {lang === 'en-US' ? 'English' : lang === 'ta-IN' ? 'Tamil' : 'Tanglish'}
+              </Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        <TouchableOpacity  onPress={() => navigation.navigate('CaregiverStack')}>
           <Text style={{ color: colors.textMuted, fontSize: 14, textDecorationLine: 'underline' }}>
             Caregiver Sign-In (Email/Password)
           </Text>

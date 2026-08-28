@@ -11,6 +11,7 @@ export const useStore = create((set, get) => ({
   dailyPlan: null,
   insights: [],
   activityStats: null,
+  cognitiveFingerprint: null,
   recentSessions: [],
   medications: [
     { id: '1', time: '8:00 AM', name: 'Vitamin / Blood Pressure', taken: true },
@@ -25,6 +26,7 @@ export const useStore = create((set, get) => ({
   ],
   isOffline: false,
   patientSettings: { language: 'English', fontSize: 'Normal', highContrast: false },
+  routineAlerts: [],
   
   setOfflineStatus: (status) => set({ isOffline: status }),
   
@@ -43,6 +45,33 @@ export const useStore = create((set, get) => ({
   addTimelineTask: (task) => set((state) => ({
     timelineTasks: [...state.timelineTasks, { ...task, id: Date.now().toString(), done: false }]
   })),
+
+  evaluateRoutine: () => set((state) => {
+    const alerts = [];
+    const now = new Date();
+    
+    // Check pending medications
+    state.medications.forEach(med => {
+      if (!med.taken) {
+        // Very simplistic time check for prototype: if it's PM and the med was for AM, it's very late.
+        // Or just if time string contains 'AM' and it is currently past 12 PM.
+        if (med.time.includes('AM') && now.getHours() >= 12) {
+          alerts.push({ id: med.id, type: 'medication', message: `Morning medication "${med.name}" was missed. Patient is currently inactive.` });
+        }
+      }
+    });
+
+    // Check pending timeline tasks
+    state.timelineTasks.forEach(task => {
+      if (!task.done) {
+        if (task.time.includes('AM') && now.getHours() >= 12) {
+          alerts.push({ id: task.id, type: 'schedule', message: `Routine Deviation: "${task.title}" was not acknowledged.` });
+        }
+      }
+    });
+
+    return { routineAlerts: alerts };
+  }),
 
   // Actions
   loadPatientData: async (patientId) => {
@@ -64,12 +93,24 @@ export const useStore = create((set, get) => ({
     const dailyPlan = await DailyPlanService.getTodayPlan(patientId);
     const insights = await InsightService.getRecentInsights(patientId);
     
-    // Mocking Activity Stats and Recent Sessions for the dashboard
+    // Mocking Activity Stats, Recent Sessions, and Cognitive Fingerprint for the dashboard
     const activityStats = {
       totalGamesPlayed: 142,
       activeDaysThisWeek: 5,
       currentStreak: 3,
       cognitiveAge: 68
+    };
+    
+    const cognitiveFingerprint = {
+      Memory: [
+        { trait: 'Visual recall', status: 'Strong' },
+        { trait: 'Sequential recall', status: 'Weak' },
+        { trait: 'Delayed recall', status: 'Moderate' }
+      ],
+      Attention: [
+        { trait: 'Sustained attention', status: 'Strong' },
+        { trait: 'Distraction resistance', status: 'Weak' }
+      ]
     };
 
     const recentSessions = [
@@ -79,7 +120,7 @@ export const useStore = create((set, get) => ({
       { id: 4, game: 'Pattern Recall', domain: 'Attention', date: 'Sun, 9:20 AM', performance: '+4%', trend: 'up' },
     ];
 
-    set({ patient, cognitiveProfile, dailyPlan, insights, activityStats, recentSessions });
+    set({ patient, cognitiveProfile, dailyPlan, insights, activityStats, cognitiveFingerprint, recentSessions });
   },
 
   createNewPatient: async (patientData) => {
@@ -186,33 +227,43 @@ export const useStore = create((set, get) => ({
       return matched;
     }
 
-    // 3. Dynamic Patient Creation for novel names spoken
+    // 3. Return null if no match, triggering Voice Onboarding
     if (!matched && targetSearch.length > 0) {
-      // Capitalize each word in extracted name
-      const formattedName = targetSearch
-        .split(' ')
-        .map(w => w.charAt(0).toUpperCase() + w.slice(1))
-        .join(' ');
-
-      console.log('[Voice NLU Engine] 🆕 No existing match found. Automatically provisioning new voice profile for:', formattedName);
-      
-      const newId = await get().createNewPatient({
-        name: formattedName,
-        age: 70,
-        location: 'Assam, India',
-        interests: 'Cognitive Games, Music, Reminiscence',
-        family: 'Caregiver'
-      });
-      
-      matched = await db.patients.get(newId);
-      console.log('[Voice NLU Engine] ✅ Created and loaded new patient session:', matched);
-      if (matched) {
-        await get().loadPatientData(matched.patient_id);
-        return matched;
-      }
+      console.log('[Voice NLU Engine] No existing match found for:', targetSearch);
+      return null;
     }
 
     return null;
+  },
+
+  saveOnboardedPatient: async (profileData) => {
+    console.log('[Store] Saving newly onboarded patient:', profileData);
+    const newId = await get().createNewPatient({
+      name: profileData.name || 'Unknown',
+      age: profileData.age || 70,
+      location: profileData.location || 'Unknown',
+      interests: profileData.interests || '',
+      family: profileData.family || ''
+    });
+    return newId;
+  },
+
+  updatePatientProfile: async (patientId, updates) => {
+    const currentPatient = get().patient;
+    if (currentPatient && currentPatient.patient_id === patientId) {
+      const updatedPatient = { ...currentPatient, ...updates };
+      
+      // Handle array formatting if strings are passed
+      if (typeof updates.interests === 'string') {
+        updatedPatient.interests = updates.interests.split(',').map(s => s.trim());
+      }
+      if (typeof updates.family_members === 'string') {
+        updatedPatient.family_members = updates.family_members.split(',').map(s => s.trim());
+      }
+
+      await PatientProfileService.savePatient(updatedPatient);
+      set({ patient: updatedPatient });
+    }
   },
 
   refreshInsights: async (patientId) => {

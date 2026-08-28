@@ -14,6 +14,7 @@ import { ProgressScreen } from './src/pages/ProgressScreen';
 import { ActivityScreen } from './src/pages/ActivityScreen';
 import { DemoScenario } from './src/pages/DemoScenario';
 import { MedicineReminderScreen } from './src/pages/MedicineReminderScreen';
+import { ConfusionRescueScreen } from './src/pages/ConfusionRescueScreen';
 
 import { GamesScreen } from './src/pages/GamesScreen';
 import { LogOut, LayoutDashboard, Settings, Gamepad2, Pill } from 'lucide-react-native';
@@ -86,6 +87,7 @@ function PatientStack() {
       <Stack.Screen name="Progress" component={ProgressScreen} options={{ headerShown: true, title: 'My Progress', headerBackTitle: 'Back' }} />
       <Stack.Screen name="Activity" component={ActivityScreen} options={{ headerShown: true, title: 'Activity', headerBackTitle: 'Back' }} />
       <Stack.Screen name="MedicineReminder" component={MedicineReminderScreen} options={{ headerShown: false }} />
+      <Stack.Screen name="ConfusionRescue" component={ConfusionRescueScreen} options={{ headerShown: false, presentation: 'fullScreenModal' }} />
     </Stack.Navigator>
   );
 }
@@ -101,6 +103,7 @@ function CaregiverStack() {
 }
 
 import { VoicePatientLoginScreen } from './src/pages/VoicePatientLoginScreen';
+import { VoiceOnboardingScreen } from './src/pages/VoiceOnboardingScreen';
 
 export default function App() {
   const { loadPatientData, patient, seedMockDataIfEmpty } = useStore();
@@ -126,6 +129,7 @@ export default function App() {
       <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="RoleSelection" component={RoleSelectionScreen} />
         <Stack.Screen name="PatientLogin" component={VoicePatientLoginScreen} /> 
+        <Stack.Screen name="VoiceOnboarding" component={VoiceOnboardingScreen} /> 
         <Stack.Screen name="CaregiverStack" component={CaregiverStack} />
         <Stack.Screen name="PatientStack" component={PatientStack} />
       </Stack.Navigator>

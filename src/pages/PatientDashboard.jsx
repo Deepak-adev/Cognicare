@@ -4,7 +4,7 @@ import { useStore } from '../store/useStore';
 import { Card, Button, colors } from '../components/common';
 import { useTheme } from '../hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
-import { Play, Coffee, Pill, Activity, Utensils, Star, Globe, LogOut } from 'lucide-react-native';
+import { Play, Coffee, Pill, Activity, Utensils, Star, Globe, LogOut, HeartHandshake } from 'lucide-react-native';
 
 export const PatientDashboard = () => {
   const { patient, loadPatientData, timelineTasks } = useStore();
@@ -30,6 +30,25 @@ export const PatientDashboard = () => {
             <Text style={[globalStyles.headerText, { fontSize: 40 * fontScale }]}>{patient.name.split(' ')[0]} 👋</Text>
           </View>
         </View>
+
+        {/* I Need Help Rescue Button */}
+        <TouchableOpacity 
+          style={{ 
+            backgroundColor: '#f59e0b', // Calming amber instead of aggressive red
+            paddingVertical: 18, 
+            borderRadius: 24, 
+            flexDirection: 'row', 
+            alignItems: 'center', 
+            justifyContent: 'center',
+            marginBottom: 32,
+            shadowColor: '#f59e0b', shadowOffset: { width: 0, height: 6 }, shadowOpacity: 0.3, shadowRadius: 12, elevation: 6 
+          }}
+          onPress={() => navigation.navigate('ConfusionRescue')}
+          activeOpacity={0.8}
+        >
+          <HeartHandshake color="#ffffff" size={28} style={{ marginRight: 12 }} />
+          <Text style={{ color: '#ffffff', fontSize: 22 * fontScale, fontWeight: '800', letterSpacing: 0.5 }}>I Need Help</Text>
+        </TouchableOpacity>
 
         {/* Massive Hero Action */}
         <View style={{ marginBottom: 40 }}>
