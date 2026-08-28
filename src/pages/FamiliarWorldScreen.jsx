@@ -5,12 +5,14 @@ import { Card } from '../components/common';
 import { Heart, Home, MapPin, Camera, Mic, X, Sparkles, Map, Globe } from 'lucide-react-native';
 import { useTheme } from '../hooks/useTheme';
 import * as Speech from 'expo-speech';
+import { reminiscenceService } from '../services/reminiscenceService';
 
 export const FamiliarWorldScreen = () => {
   const { patient } = useStore();
   const { t, fontScale, colors, globalStyles } = useTheme();
 
   const [selectedMemory, setSelectedMemory] = useState(null);
+  const [isGenerating, setIsGenerating] = useState(false);
 
   const memories = [
     { id: 1, type: 'family', title: 'Priya', subtitle: 'Daughter', icon: '👩🏽', color: '#fff0f2', prompt: "This is your daughter Priya. Do you remember when she visited last week?" },
@@ -21,9 +23,23 @@ export const FamiliarWorldScreen = () => {
     { id: 6, type: 'memory', title: 'Old House', subtitle: 'Memory', icon: '🏡', color: '#f3e8ff', prompt: "This is your first house. Who were your neighbors?" },
   ];
 
-  const handleMemoryPress = (memory) => {
+  const handleMemoryPress = async (memory) => {
     setSelectedMemory(memory);
-    Speech.speak(memory.prompt, { language: 'en-US', rate: 0.9, pitch: 1 });
+    
+    const profileContext = patient ? {
+      name: patient.name,
+      interests: patient.interests,
+      family: patient.family_members
+    } : "No profile available";
+
+    const photoMetadata = `${memory.title} - ${memory.subtitle}`;
+
+    setIsGenerating(true);
+    const narration = await reminiscenceService.narrateMemory(memory.id, photoMetadata, profileContext);
+    setIsGenerating(false);
+
+    setSelectedMemory({ ...memory, dynamicPrompt: narration });
+    Speech.speak(narration, { language: 'en-US', rate: 0.9, pitch: 1 });
   };
 
   const closeMemory = () => {
@@ -91,7 +107,7 @@ export const FamiliarWorldScreen = () => {
             </View>
 
             <Text style={{ fontSize: 24 * fontScale, color: colors.textMain, textAlign: 'center', fontWeight: '600', lineHeight: 34, marginBottom: 32 }}>
-              "{selectedMemory?.prompt}"
+              {isGenerating ? "Thinking of a warm memory..." : `"${selectedMemory?.dynamicPrompt || selectedMemory?.prompt}"`}
             </Text>
 
             <TouchableOpacity style={styles.micBtn}>

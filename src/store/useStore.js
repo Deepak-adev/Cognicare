@@ -4,6 +4,7 @@ import { PatientProfileService } from '../services/PatientProfileService';
 import { CognitiveProfileService } from '../services/CognitiveProfileService';
 import { DailyPlanService } from '../services/DailyPlanService';
 import { InsightService } from '../services/InsightService';
+import { sundowningAnalyzer } from '../services/sundowningAnalyzer';
 
 export const useStore = create((set, get) => ({
   patient: null,
@@ -27,6 +28,9 @@ export const useStore = create((set, get) => ({
   isOffline: false,
   patientSettings: { language: 'English', fontSize: 'Normal', highContrast: false },
   routineAlerts: [],
+  
+  // Advanced Features State
+  sundowningRiskWindow: null,
   
   setOfflineStatus: (status) => set({ isOffline: status }),
   
@@ -72,6 +76,37 @@ export const useStore = create((set, get) => ({
 
     return { routineAlerts: alerts };
   }),
+
+  // Advanced Feature Actions
+  logInteraction: async (patientId, entry) => {
+    if (!patientId) return;
+    await sundowningAnalyzer.appendLog(patientId, entry);
+    // After logging, check if we entered a risk window
+    await get().checkSundowningRisk(patientId);
+  },
+
+  checkSundowningRisk: async (patientId) => {
+    if (!patientId) return;
+    const riskWindow = await sundowningAnalyzer.getSundowningRiskWindow(patientId);
+    
+    // Auto-apply simplified UI if risk is active
+    if (riskWindow && !get().sundowningRiskWindow) {
+      // Just entered risk window: adjust settings safely
+      get().updatePatientSettings({
+        fontSize: 'Large', // simplified UI
+        sundowningModeActive: true
+      });
+      // Caregiver notification would be pushed here
+      console.log(`[Sundowning] Risk window detected for patient ${patientId}. Settings adjusted.`);
+    } else if (!riskWindow && get().sundowningRiskWindow) {
+      // Exited risk window: could revert settings, but maybe safer to let them stay large
+      get().updatePatientSettings({
+        sundowningModeActive: false
+      });
+    }
+
+    set({ sundowningRiskWindow: riskWindow });
+  },
 
   // Actions
   loadPatientData: async (patientId) => {

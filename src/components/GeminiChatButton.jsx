@@ -19,6 +19,7 @@ import { Audio } from 'expo-av';
 import { Mic, MicOff } from 'lucide-react-native';
 import { sendMessageToGemini } from '../services/geminiService';
 import { GroqService } from '../services/GroqService';
+import { moodService } from '../services/moodService';
 import { navigateTo } from '../utils/navigationRef';
 import { useStore } from '../store/useStore';
 import { db } from '../db/db';
@@ -169,6 +170,7 @@ export const GeminiChatButton = () => {
     markMedicationTaken,
     addMedication,
     addTimelineTask,
+    logInteraction,
     medications,
     patientSettings,
     patient,
@@ -369,7 +371,9 @@ export const GeminiChatButton = () => {
         patientSettings,
       };
 
+      const startTime = Date.now();
       const response = await sendMessageToGemini(history, query, appContext);
+      const responseTimeMs = Date.now() - startTime;
 
       const aiText = safeString(response.message || 'Action executed.');
       let actionDesc = safeString(response.actionDescription);
@@ -392,6 +396,20 @@ export const GeminiChatButton = () => {
         executeAgenticAction(response.action);
       }
 
+      // Mood tagging and logging
+      if (patient?.patient_id) {
+        // Run mood classification async without blocking UI
+        moodService.classifyMood(isVoice ? query : '').then(({ mood, confidence }) => {
+          logInteraction(patient.patient_id, {
+            timestamp: new Date().toISOString(),
+            mood,
+            confidence,
+            response_time_ms: responseTimeMs,
+            accuracy: 1.0 // Mock accuracy for now (would come from game logic in reality)
+          });
+        });
+      }
+
       // Voice output if enabled in settings or it was a voice query
       if (patientSettings?.voiceFeedback || isVoice) {
         Speech.speak(aiText);
@@ -407,7 +425,7 @@ export const GeminiChatButton = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [inputText, isLoading, messages, executeAgenticAction, patientSettings, patient, medications]);
+  }, [inputText, isLoading, messages, executeAgenticAction, patientSettings, patient, medications, logInteraction]);
 
   useEffect(() => {
     if (messages.length > 0) {
