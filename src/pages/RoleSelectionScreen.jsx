@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
 import { globalStyles, colors, Button } from '../components/common';
 import { useNavigation } from '@react-navigation/native';
 import { HeartPulse, LayoutDashboard } from 'lucide-react-native';
+import { useStore } from '../store/useStore';
 
 export const RoleSelectionScreen = () => {
   const navigation = useNavigation();
@@ -43,6 +44,16 @@ export const RoleSelectionScreen = () => {
           <Text style={styles.roleTitle}>I am a Caregiver</Text>
           <Text style={styles.roleDesc}>Manage patients and view insights.</Text>
         </View>
+      </TouchableOpacity>
+
+      <TouchableOpacity 
+        style={{ marginTop: 20 }}
+        onPress={() => {
+          useStore.getState().devClearDatabase();
+          alert('Database reset. Please reload the app.');
+        }}
+      >
+        <Text style={{ color: colors.danger, textDecorationLine: 'underline', fontWeight: 'bold' }}>DEV: Reset All Data</Text>
       </TouchableOpacity>
     </View>
   );

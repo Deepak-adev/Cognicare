@@ -4,7 +4,7 @@ import { globalStyles, colors, Button } from '../components/common';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { db } from '../db/db';
 import { useStore } from '../store/useStore';
-import { Plus, User } from 'lucide-react-native';
+import { Plus, User, Trash2 } from 'lucide-react-native';
 
 export const CaregiverPatientListScreen = () => {
   const navigation = useNavigation();
@@ -58,6 +58,17 @@ export const CaregiverPatientListScreen = () => {
                 <Text style={{ fontSize: 20, fontWeight: '800', color: colors.textMain }}>{p.name}</Text>
                 <Text style={{ fontSize: 16, color: colors.textMuted }}>{p.location} • Age {p.age}</Text>
               </View>
+              
+              <TouchableOpacity 
+                style={styles.deleteBtn}
+                onPress={async () => {
+                  await db.patients.delete(p.patient_id || p.id);
+                  const remaining = await db.patients.toArray();
+                  setPatients(remaining);
+                }}
+              >
+                <Trash2 color={colors.danger} size={24} />
+              </TouchableOpacity>
             </TouchableOpacity>
           ))
         )}
@@ -106,5 +117,12 @@ const styles = StyleSheet.create({
     backgroundColor: '#ffffff',
     borderRadius: 20,
     marginTop: 20
+  },
+  deleteBtn: {
+    padding: 8,
+    backgroundColor: colors.danger + '15',
+    borderRadius: 12,
+    justifyContent: 'center',
+    alignItems: 'center',
   }
 });

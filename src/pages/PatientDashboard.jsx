@@ -27,7 +27,7 @@ export const PatientDashboard = () => {
         <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
           <View>
             <Text style={{ fontSize: 22 * fontScale, color: colors.textMuted, fontWeight: '700' }}>{t('greeting')}</Text>
-            <Text style={[globalStyles.headerText, { fontSize: 40 * fontScale }]}>{patient.name.split(' ')[0]} 👋</Text>
+            <Text style={[globalStyles.headerText, { fontSize: 40 * fontScale }]}>{patient.name} 👋</Text>
           </View>
         </View>
 
@@ -47,7 +47,7 @@ export const PatientDashboard = () => {
           activeOpacity={0.8}
         >
           <HeartHandshake color="#ffffff" size={28} style={{ marginRight: 12 }} />
-          <Text style={{ color: '#ffffff', fontSize: 22 * fontScale, fontWeight: '800', letterSpacing: 0.5 }}>I Need Help</Text>
+          <Text style={{ color: '#ffffff', fontSize: 22 * fontScale, fontWeight: '800', letterSpacing: 0.5 }}>{t('iNeedHelp') || 'I Need Help'}</Text>
         </TouchableOpacity>
 
         {/* Massive Hero Action */}
@@ -82,7 +82,7 @@ export const PatientDashboard = () => {
               onPress={() => navigation.navigate('MedicineReminder')}
             >
               <Pill color="#3b82f6" size={36} style={{ marginBottom: 12 }} />
-              <Text style={[styles.navCardText, { fontSize: 20 * fontScale }]}>Reminders</Text>
+              <Text style={[styles.navCardText, { fontSize: 20 * fontScale }]}>{t('reminders') || 'Reminders'}</Text>
             </TouchableOpacity>
           </View>
         )}
@@ -123,7 +123,7 @@ export const PatientDashboard = () => {
                     <Text style={{ fontSize: 16 * fontScale, color: colors.textMuted, fontWeight: '700', minWidth: 85, flexShrink: 0 }}>{item.time}</Text>
                     <IconComponent color={item.current ? colors.primary : colors.textMuted} size={20} style={{ marginRight: 8, flexShrink: 0 }} />
                     <Text style={[styles.journeyTitle, item.done && styles.journeyTitleDone, item.current && styles.journeyTitleCurrent, { fontSize: 22 * fontScale, flexShrink: 1 }]} numberOfLines={2}>
-                      {item.title}
+                      {t(item.title) || item.title}
                     </Text>
                   </View>
                   {item.current && (

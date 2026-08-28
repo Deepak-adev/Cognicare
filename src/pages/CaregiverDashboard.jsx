@@ -122,7 +122,7 @@ const CaregiverHealthTab = () => {
         </Text>
         
         {/* Simple Bar Chart UI representing the trend */}
-        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 120, marginBottom: 10 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'flex-end', justifyContent: 'space-between', height: 160, marginBottom: 10 }}>
           {[
             { day: 'M', value: 100 },
             { day: 'T', value: 80 },
@@ -130,15 +130,19 @@ const CaregiverHealthTab = () => {
             { day: 'T', value: 60 },
             { day: 'F', value: 60 },
           ].map((point, i) => (
-            <View key={i} style={{ alignItems: 'center', width: 40 }}>
+            <View key={i} style={{ alignItems: 'center', width: 40, flex: 1, justifyContent: 'flex-end' }}>
               <Text style={{ color: colors.textMuted, fontSize: 12, marginBottom: 4 }}>{point.value}%</Text>
-              <View style={{ 
-                width: 12, 
-                height: `${point.value}%`, 
-                backgroundColor: point.value > 70 ? colors.success : colors.danger,
-                borderRadius: 6,
-                marginBottom: 8
-              }} />
+              
+              {/* Fixed height container for the bar to scale against */}
+              <View style={{ height: 100, width: 12, justifyContent: 'flex-end', marginBottom: 8 }}>
+                <View style={{ 
+                  width: 12, 
+                  height: `${point.value}%`, 
+                  backgroundColor: point.value > 70 ? colors.success : colors.danger,
+                  borderRadius: 6,
+                }} />
+              </View>
+              
               <Text style={{ color: colors.textMain, fontWeight: '700' }}>{point.day}</Text>
             </View>
           ))}

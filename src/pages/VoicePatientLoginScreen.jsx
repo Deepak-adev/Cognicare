@@ -5,7 +5,8 @@ import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../store/useStore';
 import { db } from '../db/db';
 import { Mic, MicOff, Volume2, CheckCircle2, Sparkles, UserCheck, ArrowLeft, ArrowRight, User } from 'lucide-react-native';
-import Voice from '@react-native-voice/voice';
+import { Audio } from 'expo-av';
+import { GroqService } from '../services/GroqService';
 
 export const VoicePatientLoginScreen = () => {
   const navigation = useNavigation();
@@ -23,41 +24,15 @@ export const VoicePatientLoginScreen = () => {
   const [waveAnim4] = useState(new Animated.Value(40));
   const [waveAnim5] = useState(new Animated.Value(25));
   const [selectedLang, setSelectedLang] = useState('en-US');
+  const [recording, setRecording] = useState(null);
   const inputRef = useRef(null);
-  const recognitionRef = useRef(null);
 
   const isWebSpeechSupported = typeof window !== 'undefined' && ('SpeechRecognition' in window || 'webkitSpeechRecognition' in window);
 
   useEffect(() => {
     console.log('==================================================');
-    console.log('[VoiceLogin Diagnostics] Screen Mounted.');
-    console.log('[VoiceLogin Diagnostics] Platform / Window check:', {
-      platformOS: Platform.OS,
-      typeofWindow: typeof window,
-      isWebSpeechSupported,
-      hasSpeechRecognition: typeof window !== 'undefined' && 'SpeechRecognition' in window,
-      hasWebkitSpeechRecognition: typeof window !== 'undefined' && 'webkitSpeechRecognition' in window,
-    });
+    console.log('[VoiceLogin Diagnostics] Screen Mounted. Using expo-av and GroqService.');
     console.log('==================================================');
-
-    // Register native Voice listeners if available
-    if (Platform.OS !== 'web' && Voice && typeof Voice.onSpeechResults === 'function') {
-      Voice.onSpeechStart = () => {
-        console.log('[Voice Native] Speech recognition started via device mic');
-      };
-      Voice.onSpeechResults = (e) => {
-        if (e.value && e.value.length > 0) {
-          const spokenText = e.value[0];
-          console.log('[Voice Native] Recognized speech:', spokenText);
-          setTranscript(spokenText);
-          transcriptRef.current = spokenText;
-        }
-      };
-      Voice.onSpeechError = (e) => {
-        console.error('[Voice Native] Speech recognition error:', e.error);
-        setIsListening(false);
-      };
-    }
 
     const fetchPatients = async () => {
       try {
@@ -71,8 +46,8 @@ export const VoicePatientLoginScreen = () => {
     fetchPatients();
 
     return () => {
-      if (Platform.OS !== 'web' && Voice && typeof Voice.destroy === 'function') {
-        Voice.destroy().then(Voice.removeAllListeners);
+      if (recording) {
+        recording.stopAndUnloadAsync().catch(() => {});
       }
     };
   }, []);
@@ -124,43 +99,50 @@ export const VoicePatientLoginScreen = () => {
 
     if (isListening) {
       // STOP LISTENING & ANALYZE
-      console.log('[SpeechRec] Stopping recognition engine...');
-      if (recognitionRef.current) {
-        try { 
-          recognitionRef.current.stop(); 
-          console.log('[SpeechRec] recognition.stop() called successfully.');
-        } catch (e) {
-          console.warn('[SpeechRec] Error stopping Web Speech recognition:', e);
-        }
-      }
-
-      if (Voice && typeof Voice.stop === 'function') {
-        try {
-          await Voice.stop();
-          console.log('[Voice Native] Voice.stop() executed');
-        } catch (e) {
-          console.warn('[Voice Native] Error stopping native Voice:', e);
-        }
-      }
-
+      console.log('[SpeechRec] Stopping recording engine...');
       setIsListening(false);
       Keyboard.dismiss();
 
-      let currentText = transcriptRef.current;
-      console.log('[SpeechRec] Captured text on mic toggle stop:', JSON.stringify(currentText));
+      let finalSpokenText = transcriptRef.current;
 
-      // Fallback for Mobile / Expo Go if no text was captured
-      if (!currentText || currentText.trim().length === 0) {
-        if (availablePatients.length > 0) {
-          currentText = availablePatients[0].name; // Default to first available patient e.g. "Aunt Maya"
-          console.log('[SpeechRec Mobile Fallback] No direct text captured, auto-selected registered patient profile:', currentText);
-          setTranscript(currentText);
+      if (recording) {
+        try {
+          await recording.stopAndUnloadAsync();
+          await Audio.setAudioModeAsync({ allowsRecordingIOS: false });
+          const uri = recording.getURI();
+          setRecording(null);
+
+          console.log('[SpeechRec] Uploading audio to Groq Whisper for transcription...');
+          setTranscript('Listening...');
+          
+          const langCode = selectedLang === 'tanglish' ? 'en-US' : selectedLang; 
+          const transcribed = await GroqService.transcribeAudio(uri, langCode);
+          
+          if (transcribed) {
+            console.log('[SpeechRec] Transcription success:', transcribed);
+            finalSpokenText = transcribed;
+            setTranscript(transcribed);
+            transcriptRef.current = transcribed;
+          }
+        } catch (e) {
+          console.error('[SpeechRec Error] Failed during transcription:', e);
         }
       }
 
-      if (currentText && currentText.trim().length > 0) {
-        console.log('[SpeechRec] Analyzing spoken transcript:', currentText);
-        processVoiceInput(currentText);
+      console.log('[SpeechRec] Captured text on mic toggle stop:', JSON.stringify(finalSpokenText));
+
+      // Fallback for Mobile / Expo Go if no text was captured
+      if (!finalSpokenText || finalSpokenText.trim().length === 0) {
+        if (availablePatients.length > 0) {
+          finalSpokenText = availablePatients[0].name; // Default to first available patient e.g. "Aunt Maya"
+          console.log('[SpeechRec Mobile Fallback] No direct text captured, auto-selected registered patient profile:', finalSpokenText);
+          setTranscript(finalSpokenText);
+        }
+      }
+
+      if (finalSpokenText && finalSpokenText.trim().length > 0) {
+        console.log('[SpeechRec] Analyzing spoken transcript:', finalSpokenText);
+        processVoiceInput(finalSpokenText);
       } else {
         console.warn('[SpeechRec] Mic stopped and no patient profile was found.');
       }
@@ -171,80 +153,16 @@ export const VoicePatientLoginScreen = () => {
       transcriptRef.current = '';
       setVerifiedPatient(null);
 
-      // Web Speech API execution path
-      if (isWebSpeechSupported) {
-        try {
-          const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-          console.log('[SpeechRec Web] Instantiating SpeechRecognition instance...');
-          const recognition = new SpeechRecognition();
-          recognitionRef.current = recognition;
-          recognition.continuous = false; // Auto stop when phrase completes
-          recognition.interimResults = true;
-          recognition.lang = selectedLang === 'tanglish' ? 'en-IN' : selectedLang;
-
-          recognition.onstart = () => {
-            console.log('[SpeechRec Event] recognition.onstart - Speech recognition engine STARTED listening audio.');
-          };
-
-          recognition.onspeechstart = () => {
-            console.log('[SpeechRec Event] recognition.onspeechstart - Sound/Speech detected by microphone.');
-          };
-
-          recognition.onspeechend = () => {
-            console.log('[SpeechRec Event] recognition.onspeechend - Speech paused or ended.');
-          };
-
-          recognition.onresult = (event) => {
-            console.log('[SpeechRec Event] recognition.onresult triggered. Results count:', event.results.length);
-            let text = '';
-            for (let i = 0; i < event.results.length; ++i) {
-              const res = event.results[i];
-              console.log(`[SpeechRec Event] Result [${i}]: "${res[0].transcript}" (confidence: ${res[0].confidence}, isFinal: ${res.isFinal})`);
-              text += res[0].transcript;
-            }
-            if (text) {
-              console.log('[SpeechRec Event] Updated transcript state ->', text);
-              setTranscript(text);
-              transcriptRef.current = text;
-            }
-          };
-
-          recognition.onerror = (e) => {
-            console.error('[SpeechRec Error] Web Speech API Error event:', {
-              error: e.error,
-              message: e.message,
-              event: e
-            });
-            setIsListening(false);
-          };
-
-          recognition.onend = () => {
-            console.log('[SpeechRec Event] recognition.onend - Session closed.');
-            setIsListening(false);
-            const finalSpokenText = transcriptRef.current;
-            if (finalSpokenText && finalSpokenText.trim().length > 0) {
-              console.log('[SpeechRec Auto-Analyze] Automatically analyzing voice input:', finalSpokenText);
-              processVoiceInput(finalSpokenText);
-            }
-          };
-
-          console.log('[SpeechRec Web] Invoking recognition.start()...');
-          recognition.start();
-        } catch (err) {
-          console.error('[SpeechRec Error] Failed during Web Speech Recognition start:', err);
-        }
-      } else {
-        // Native device mic via @react-native-voice/voice
-        try {
-          if (Platform.OS !== 'web' && Voice && typeof Voice.start === 'function') {
-            console.log('[Voice Native] Starting native device mic speech recognition...');
-            await Voice.start(selectedLang === 'tanglish' ? 'en-IN' : selectedLang);
-          } else {
-            console.warn('[SpeechRec Mobile] Native voice module unavailable in current environment.');
-          }
-        } catch (err) {
-          console.error('[Voice Native Error] Failed to start native voice recognition:', err);
-        }
+      console.log('[SpeechRec] Invoking Audio.Recording.createAsync()...');
+      try {
+        await Audio.requestPermissionsAsync();
+        await Audio.setAudioModeAsync({ allowsRecordingIOS: true, playsInSilentModeIOS: true });
+        const { recording: newRec } = await Audio.Recording.createAsync(Audio.RecordingOptionsPresets.HIGH_QUALITY);
+        setRecording(newRec);
+        console.log('[SpeechRec Event] Audio recording engine STARTED listening audio.');
+      } catch (err) {
+        console.error('[SpeechRec Error] Failed during Audio Recording start:', err);
+        setIsListening(false);
       }
     }
   };

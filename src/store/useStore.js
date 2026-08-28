@@ -372,5 +372,20 @@ export const useStore = create((set, get) => ({
     const insights = await InsightService.getRecentInsights(patientId);
     const alerts = []; // Not implemented yet
     set({ insights, alerts });
+  },
+
+  devClearDatabase: async () => {
+    try {
+      await db.patients.clear();
+      await db.cognitive_profiles.clear();
+      await db.daily_plans.clear();
+      await db.insights.clear();
+      await db.sundowning_events.clear();
+      await db.reminiscence_cache.clear();
+      set({ patient: null });
+      console.log('Database cleared completely.');
+    } catch (err) {
+      console.error('Error clearing database:', err);
+    }
   }
 }));

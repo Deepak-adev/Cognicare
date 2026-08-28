@@ -70,5 +70,19 @@ When the application launches (`App.js`), it routes the user to the **Role Selec
 - **GroqService.js:** Handles all fast-inference tasks. 
   - `transcribeAudio()`: Uses Whisper for Speech-to-Text.
   - `chatTurn()` & `extractProfile()`: Uses LLaMA/Compound models for conversational logic and structured JSON extraction.
-- **geminiService.js (AGUI):** Handles complex UI tool-calling and intent matching. Parses user requests into actionable JSON objects (`{ action: { type: 'navigate', screen: 'Games' } }`).
+- **GeminiService.js (AGUI):** Handles complex UI tool-calling and intent matching. Parses user requests into actionable JSON objects (`{ action: { type: 'navigate', screen: 'Games' } }`).
+- **moodService.js:** Intercepts AGUI voice logs to classify emotional tone (e.g. calm, confused, anxious) using LLM analysis.
+- **reminiscenceService.js:** Generates dynamic, warm narrations about family photos based on user context.
+- **sundowningAnalyzer.js:** Analyzes recent interaction logs locally via `AsyncStorage` to detect deviations in response time and mood, triggering automated UI simplification.
 - **End-to-End Pipeline:** `expo-av` (Audio Record) -> `GroqService` (Transcription) -> `Gemini/Groq API` (LLM processing) -> `expo-speech` (TTS Output) & `Zustand` (UI Action Execution).
+
+## 7. Advanced AI Capabilities
+
+### A. Voice Mood Tagging
+The system silently analyzes the emotional tone (e.g., calm, distressed, anxious) of every voice interaction with the AGUI. It logs this alongside response latency to create an emotional baseline over time.
+
+### B. Offline Sundowning Risk Detection
+Operating entirely offline for privacy, the app constantly evaluates the last 14 days of mood logs. If it detects a sudden spike in negative mood or response delay (common symptoms of "Sundowning" syndrome), it automatically triggers a global state change. This forces the UI into a highly simplified mode (larger fonts, reduced options) to avoid overwhelming the patient.
+
+### C. Reminiscence Therapy Narration
+When viewing photos in "My World," the app uses an LLM to dynamically generate a warm, 2-3 sentence personalized narration. It combines the photo's metadata with the patient's learned profile to help reinforce identity and reduce anxiety. Narrations are aggressively cached offline for robust operation.

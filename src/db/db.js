@@ -42,6 +42,12 @@ class MockDBStore {
     await this._saveData(data);
   }
 
+  async delete(id) {
+    const data = await this._getData();
+    const filtered = data.filter(i => i.patient_id !== id && i.id !== id);
+    await this._saveData(filtered);
+  }
+
   where(field) {
     return {
       equals: (value) => {
