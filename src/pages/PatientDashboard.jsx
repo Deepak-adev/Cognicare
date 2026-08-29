@@ -26,7 +26,7 @@ export const PatientDashboard = () => {
         
         <View style={[styles.header, { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }]}>
           <View>
-            <Text style={{ fontSize: 24 * fontScale, color: colors.textMuted, fontWeight: '700' }}>Good morning,</Text>
+            <Text style={{ fontSize: 24 * fontScale, color: colors.textMuted, fontWeight: '700' }}>{t('greeting')}</Text>
             <Text style={[globalStyles.headerText, { fontSize: 44 * fontScale, marginTop: 4 }]}>{patient.name} 👋</Text>
           </View>
         </View>
@@ -47,13 +47,13 @@ export const PatientDashboard = () => {
           activeOpacity={0.8}
         >
           <HeartHandshake color="#ffffff" size={28} style={{ marginRight: 12 }} />
-          <Text style={{ color: '#ffffff', fontSize: 22 * fontScale, fontWeight: '800', letterSpacing: 0.5 }}>I Need Help</Text>
+          <Text style={{ color: '#ffffff', fontSize: 22 * fontScale, fontWeight: '800', letterSpacing: 0.5 }}>{t('I Need Help') || 'I Need Help'}</Text>
         </TouchableOpacity>
 
         {/* Massive Hero Action */}
         <View style={{ marginBottom: 40 }}>
           <Text style={{ fontSize: 22 * fontScale, color: colors.textMain, fontWeight: '700', marginBottom: 16 }}>
-            You have one activity today.
+            {t('oneActivity')}
           </Text>
           <Button 
             onPress={() => navigation.navigate('Activity')} 
@@ -61,7 +61,7 @@ export const PatientDashboard = () => {
             style={{ shadowColor: colors.primary, shadowOffset: { width: 0, height: 12 }, shadowOpacity: 0.3, shadowRadius: 20, elevation: 10, paddingVertical: 20, borderRadius: 24 }}
           >
             <Text style={{ fontSize: 18 * fontScale, fontWeight: '900', color: '#ffffff', textTransform: 'uppercase', letterSpacing: 1 }}>
-              Start Today's Activity
+              {t('startActivity')}
             </Text>
           </Button>
         </View>
@@ -74,7 +74,7 @@ export const PatientDashboard = () => {
               onPress={() => navigation.navigate('FamiliarWorld')}
             >
               <Globe color="#e11d48" size={36} style={{ marginBottom: 12 }} />
-              <Text style={[styles.navCardText, { fontSize: 20 * fontScale, color: '#be123c' }]}>My World</Text>
+              <Text style={[styles.navCardText, { fontSize: 20 * fontScale, color: '#be123c' }]}>{t('myWorld')}</Text>
             </TouchableOpacity>
 
             <TouchableOpacity 
@@ -82,13 +82,13 @@ export const PatientDashboard = () => {
               onPress={() => navigation.navigate('MedicineReminder')}
             >
               <Pill color="#2563eb" size={36} style={{ marginBottom: 12 }} />
-              <Text style={[styles.navCardText, { fontSize: 20 * fontScale, color: '#1d4ed8' }]}>Reminders</Text>
+              <Text style={[styles.navCardText, { fontSize: 20 * fontScale, color: '#1d4ed8' }]}>{t('reminders')}</Text>
             </TouchableOpacity>
           </View>
         )}
 
         {/* Today's Journey */}
-        <Text style={[globalStyles.subHeaderText, { marginBottom: 20, fontSize: 24, fontWeight: '900' }]}>Today's Journey</Text>
+        <Text style={[globalStyles.subHeaderText, { marginBottom: 20, fontSize: 24, fontWeight: '900' }]}>{t('todaysJourney')}</Text>
         <Card style={{ padding: 24, borderRadius: 24, backgroundColor: '#ffffff', borderColor: '#e2e8f0' }}>
           {journey.map((item, index) => {
             const isLast = index === journey.length - 1;

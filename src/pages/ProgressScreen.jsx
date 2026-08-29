@@ -10,7 +10,7 @@ export const ProgressScreen = () => {
   return (
     <ScrollView style={[globalStyles.container, { backgroundColor: '#eff6ff' }]} showsVerticalScrollIndicator={false}>
       <View style={{ alignItems: 'center', marginVertical: 40 }}>
-        <Text style={{ fontSize: 70 * fontScale, marginBottom: 16 }}>🌟</Text>
+        <Text style={{ fontSize: 70 * fontScale, marginBottom: 16 }}>{t("🌟") || "🌟"}</Text>
         <Text style={[globalStyles.headerText, { textAlign: 'center', color: colors.primary }]}>
           {t('doingWell') || "You're doing well!"}
         </Text>
@@ -22,11 +22,11 @@ export const ProgressScreen = () => {
       <Card style={{ padding: 24, borderRadius: 30 }}>
         <View style={styles.skillRow}>
           <Text style={[styles.skillName, { fontSize: 24 * fontScale }]}>{t('memory') || 'Memory'}</Text>
-          <Text style={{ fontSize: 24 * fontScale }}>⭐⭐⭐⭐☆</Text>
+          <Text style={{ fontSize: 24 * fontScale }}>{t("⭐⭐⭐⭐☆") || "⭐⭐⭐⭐☆"}</Text>
         </View>
         <View style={[styles.skillRow, { borderBottomWidth: 0, paddingBottom: 0 }]}>
           <Text style={[styles.skillName, { fontSize: 24 * fontScale }]}>{t('attention') || 'Attention'}</Text>
-          <Text style={{ fontSize: 24 * fontScale }}>⭐⭐⭐☆☆</Text>
+          <Text style={{ fontSize: 24 * fontScale }}>{t("⭐⭐⭐☆☆") || "⭐⭐⭐☆☆"}</Text>
         </View>
       </Card>
 

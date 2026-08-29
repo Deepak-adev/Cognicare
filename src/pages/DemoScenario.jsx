@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { ScrollView, View, Text } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 import { useStore } from '../store/useStore';
 import { Card, Button, globalStyles, colors } from '../components/common';
 import { GamePerformanceService } from '../services/GamePerformanceService';
@@ -8,6 +9,7 @@ import { DailyPlanService } from '../services/DailyPlanService';
 import { resetDatabase } from '../db/db';
 
 export const DemoScenario = () => {
+  const { t } = useTheme();
   const { patient, loadPatientData, importMockVoiceProfile } = useStore();
   const [logs, setLogs] = useState([]);
 
@@ -47,7 +49,7 @@ export const DemoScenario = () => {
 
   return (
     <ScrollView style={globalStyles.container}>
-      <Text style={[globalStyles.headerText, { marginTop: 10, marginBottom: 24 }]}>Admin Testing</Text>
+      <Text style={[globalStyles.headerText, { marginTop: 10, marginBottom: 24 }]}>{t("Admin Testing") || "Admin Testing"}</Text>
       
       <Button onPress={step1} style={{marginBottom: 16}}>1. Import Voice Profile</Button>
       <Button onPress={step2} style={{marginBottom: 16}}>2. Play Game (High Score)</Button>
@@ -56,14 +58,14 @@ export const DemoScenario = () => {
       <Button onPress={handleReset} style={{backgroundColor: colors.danger, marginBottom: 32}}>Reset Database</Button>
 
       <Card>
-        <Text style={{fontWeight: '800', marginBottom: 16, fontSize: 20, color: colors.textMain}}>System Logs</Text>
+        <Text style={{fontWeight: '800', marginBottom: 16, fontSize: 20, color: colors.textMain}}>{t("System Logs") || "System Logs"}</Text>
         {logs.map((l, i) => (
           <View key={i} style={{flexDirection: 'row', marginBottom: 8}}>
-            <Text style={{color: colors.textMuted, marginRight: 8}}>→</Text>
+            <Text style={{color: colors.textMuted, marginRight: 8}}>{t("→") || "→"}</Text>
             <Text style={{fontSize: 16, color: colors.textMain}}>{l}</Text>
           </View>
         ))}
-        {logs.length === 0 && <Text style={{color: colors.textMuted}}>No actions taken yet.</Text>}
+        {logs.length === 0 && <Text style={{color: colors.textMuted}}>{t("No actions taken yet.") || "No actions taken yet."}</Text>}
       </Card>
       
       <View style={{ height: 60 }} />

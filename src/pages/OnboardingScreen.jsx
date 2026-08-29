@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, Dimensions } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 import { Button, globalStyles, colors } from '../components/common';
 import { useStore } from '../store/useStore';
 import { Mic } from 'lucide-react-native';
@@ -7,6 +8,7 @@ import { Mic } from 'lucide-react-native';
 const { width } = Dimensions.get('window');
 
 export const OnboardingScreen = () => {
+  const { t } = useTheme();
   const { importMockVoiceProfile } = useStore();
   const [loading, setLoading] = useState(false);
 
@@ -24,10 +26,10 @@ export const OnboardingScreen = () => {
     <View style={styles.container}>
       <View style={styles.content}>
         <View style={styles.iconCircle}>
-          <Text style={{ fontSize: 60 }}>🧠</Text>
+          <Text style={{ fontSize: 60 }}>{t("🧠") || "🧠"}</Text>
         </View>
-        <Text style={styles.title}>Cognitive Care</Text>
-        <Text style={styles.subtitle}>Your AI companion for daily mental wellness and personalized care.</Text>
+        <Text style={styles.title}>{t("Cognitive Care") || "Cognitive Care"}</Text>
+        <Text style={styles.subtitle}>{t("Your AI companion for daily mental wellness and personalized care.") || "Your AI companion for daily mental wellness and personalized care."}</Text>
       </View>
 
       <View style={styles.footer}>
@@ -39,9 +41,7 @@ export const OnboardingScreen = () => {
         >
           {loading ? 'Listening to voice...' : 'Setup via Voice AI'}
         </Button>
-        <Text style={styles.footerText}>
-          (This simulates your friend's voice module)
-        </Text>
+        <Text style={styles.footerText}>{t("(This simulates your friend's voice module)") || "(This simulates your friend's voice module)"}</Text>
       </View>
     </View>
   );

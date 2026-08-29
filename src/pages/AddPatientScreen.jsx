@@ -1,11 +1,13 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 import { globalStyles, colors, Button } from '../components/common';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../store/useStore';
 import { Save } from 'lucide-react-native';
 
 export const AddPatientScreen = () => {
+  const { t } = useTheme();
   const navigation = useNavigation();
   const { createNewPatient } = useStore();
 
@@ -26,12 +28,10 @@ export const AddPatientScreen = () => {
 
   return (
     <ScrollView style={[globalStyles.container, { backgroundColor: '#ffffff' }]} showsVerticalScrollIndicator={false}>
-      <Text style={[globalStyles.headerText, { marginTop: 40, marginBottom: 8 }]}>Add Patient</Text>
-      <Text style={[globalStyles.textMuted, { marginBottom: 32 }]}>
-        Build their Familiar World memory space.
-      </Text>
+      <Text style={[globalStyles.headerText, { marginTop: 40, marginBottom: 8 }]}>{t("Add Patient") || "Add Patient"}</Text>
+      <Text style={[globalStyles.textMuted, { marginBottom: 32 }]}>{t("Build their Familiar World memory space.") || "Build their Familiar World memory space."}</Text>
 
-      <Text style={styles.label}>Full Name</Text>
+      <Text style={styles.label}>{t("Full Name") || "Full Name"}</Text>
       <TextInput 
         style={styles.input} 
         placeholder="e.g. Aunt Maya" 
@@ -39,7 +39,7 @@ export const AddPatientScreen = () => {
         onChangeText={(t) => setForm({...form, name: t})}
       />
 
-      <Text style={styles.label}>Age</Text>
+      <Text style={styles.label}>{t("Age") || "Age"}</Text>
       <TextInput 
         style={styles.input} 
         placeholder="e.g. 72" 
@@ -48,7 +48,7 @@ export const AddPatientScreen = () => {
         onChangeText={(t) => setForm({...form, age: t})}
       />
 
-      <Text style={styles.label}>Location / Home</Text>
+      <Text style={styles.label}>{t("Location / Home") || "Location / Home"}</Text>
       <TextInput 
         style={styles.input} 
         placeholder="e.g. Guwahati, Assam" 
@@ -56,7 +56,7 @@ export const AddPatientScreen = () => {
         onChangeText={(t) => setForm({...form, location: t})}
       />
 
-      <Text style={styles.label}>Family Members (comma separated)</Text>
+      <Text style={styles.label}>{t("Family Members (comma separated)") || "Family Members (comma separated)"}</Text>
       <TextInput 
         style={styles.input} 
         placeholder="e.g. Priya (Daughter), Rahul (Son)" 
@@ -64,7 +64,7 @@ export const AddPatientScreen = () => {
         onChangeText={(t) => setForm({...form, family: t})}
       />
 
-      <Text style={styles.label}>Favourite Interests (comma separated)</Text>
+      <Text style={styles.label}>{t("Favourite Interests (comma separated)") || "Favourite Interests (comma separated)"}</Text>
       <TextInput 
         style={styles.input} 
         placeholder="e.g. Gardening, Devotional Music" 

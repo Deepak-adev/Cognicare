@@ -98,7 +98,7 @@ export const GamesScreen = () => {
                   <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 12 }}>
                     <View style={[styles.badge, { backgroundColor: category.bg }]}>
                       <Text style={[styles.badgeText, { color: category.color }]}>
-                        {category.type === 'clinical' ? 'Clinical Test' : `Level ${lvl.level}`}
+                        {category.type === 'clinical' ? (t('Clinical Test') || 'Clinical Test') : `${t('Level') || 'Level'} ${lvl.level}`}
                       </Text>
                     </View>
                     <Star color={category.color} size={20} fill={category.bg} />

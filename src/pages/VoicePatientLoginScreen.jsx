@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated, TextInput, Keyboard, Platform } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 import { globalStyles, colors, Card, Button } from '../components/common';
 import { useNavigation } from '@react-navigation/native';
 import { useStore } from '../store/useStore';
@@ -9,6 +10,7 @@ import { Audio } from 'expo-av';
 import { GroqService } from '../services/GroqService';
 
 export const VoicePatientLoginScreen = () => {
+  const { t } = useTheme();
   const navigation = useNavigation();
   const { voiceLoginPatient } = useStore();
 
@@ -213,8 +215,8 @@ export const VoicePatientLoginScreen = () => {
           <ArrowLeft color={colors.textMain} size={24} />
         </TouchableOpacity>
         <View>
-          <Text style={{ fontSize: 15, color: colors.textMuted, fontWeight: '600' }}>Voice Authentication</Text>
-          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.textMain }}>Patient Login</Text>
+          <Text style={{ fontSize: 15, color: colors.textMuted, fontWeight: '600' }}>{t("Voice Authentication") || "Voice Authentication"}</Text>
+          <Text style={{ fontSize: 24, fontWeight: '800', color: colors.textMain }}>{t("Patient Login") || "Patient Login"}</Text>
         </View>
       </View>
 
@@ -267,9 +269,7 @@ export const VoicePatientLoginScreen = () => {
 
         {/* Live Spoken Text Input Card */}
         <View style={{ width: '100%', marginTop: 8 }}>
-          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', marginBottom: 8, textAlign: 'center', letterSpacing: 1 }}>
-            Spoken Name / Voice Input
-          </Text>
+          <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', marginBottom: 8, textAlign: 'center', letterSpacing: 1 }}>{t("Spoken Name / Voice Input") || "Spoken Name / Voice Input"}</Text>
 
           <View style={{
             backgroundColor: '#ffffff',
@@ -324,7 +324,7 @@ export const VoicePatientLoginScreen = () => {
             {isVerifying && (
               <View style={styles.verifyingBadge}>
                 <Sparkles color={colors.accent} size={20} style={{ marginRight: 8 }} />
-                <Text style={{ color: colors.accent, fontWeight: '800', fontSize: 15 }}>Verifying Voice Match...</Text>
+                <Text style={{ color: colors.accent, fontWeight: '800', fontSize: 15 }}>{t("Verifying Voice Match...") || "Verifying Voice Match..."}</Text>
               </View>
             )}
 
@@ -344,9 +344,7 @@ export const VoicePatientLoginScreen = () => {
 
       {/* Quick Voice Name Selector for Instant Mobile Testing */}
       <View style={{ marginBottom: 12 }}>
-        <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', marginBottom: 10, textAlign: 'center', letterSpacing: 1 }}>
-          Select or Speak Patient Name
-        </Text>
+        <Text style={{ fontSize: 13, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', marginBottom: 10, textAlign: 'center', letterSpacing: 1 }}>{t("Select or Speak Patient Name") || "Select or Speak Patient Name"}</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={{ gap: 10, paddingHorizontal: 10 }}>
           {['Ravi', 'Aunt Maya', 'Lakshmi', 'Suresh'].map((name, idx) => (
             <TouchableOpacity 
@@ -394,9 +392,7 @@ export const VoicePatientLoginScreen = () => {
         </View>
 
         <TouchableOpacity  onPress={() => navigation.navigate('CaregiverStack')}>
-          <Text style={{ color: colors.textMuted, fontSize: 14, textDecorationLine: 'underline' }}>
-            Caregiver Sign-In (Email/Password)
-          </Text>
+          <Text style={{ color: colors.textMuted, fontSize: 14, textDecorationLine: 'underline' }}>{t("Caregiver Sign-In (Email/Password)") || "Caregiver Sign-In (Email/Password)"}</Text>
         </TouchableOpacity>
       </View>
 

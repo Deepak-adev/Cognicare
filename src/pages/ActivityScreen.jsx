@@ -75,7 +75,7 @@ const MemoryGame = ({ data, onComplete }) => {
 };
 
 const AttentionGame = ({ data, onComplete }) => {
-  const { colors, globalStyles, settings, speak } = useTheme();
+  const { colors, globalStyles, settings, speak, t } = useTheme();
   const [errorMsg, setErrorMsg] = useState('');
 
   // Generate grid dynamically
@@ -104,7 +104,7 @@ const AttentionGame = ({ data, onComplete }) => {
   return (
     <View style={{ width: '100%', alignItems: 'center' }}>
       <Crosshair color={colors.danger} size={64} style={{ marginBottom: 24 }} />
-      <Text style={[globalStyles.headerText, { textAlign: 'center' }]}>Attention Tracker</Text>
+      <Text style={[globalStyles.headerText, { textAlign: 'center' }]}>{t("Attention Tracker") || "Attention Tracker"}</Text>
       <Text style={[globalStyles.text, { textAlign: 'center', marginTop: 12, marginBottom: 20 }]}>
         Tap ONLY the <Text style={{ color: colors.danger, fontWeight: '800' }}>{data.target}</Text> object.
       </Text>
@@ -130,7 +130,7 @@ const AttentionGame = ({ data, onComplete }) => {
 };
 
 const RoutineGame = ({ data, onComplete }) => {
-  const { colors, globalStyles, settings, speak } = useTheme();
+  const { colors, globalStyles, settings, speak, t } = useTheme();
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSelect = (index) => {
@@ -240,9 +240,7 @@ const AdaptiveGame = ({ onComplete }) => {
             <Text style={{ color: colors.primary, fontWeight: '800' }}>AI GENERATED: {scenario.theme}</Text>
           </View>
           <Text style={[globalStyles.headerText, { textAlign: 'center', fontSize: 34 * fontScale }]}>{scenario.intro}</Text>
-          <Text style={[globalStyles.text, { textAlign: 'center', marginTop: 12, marginBottom: 40, fontSize: 18 * fontScale }]}>
-            Look carefully for 10 seconds.
-          </Text>
+          <Text style={[globalStyles.text, { textAlign: 'center', marginTop: 12, marginBottom: 40, fontSize: 18 * fontScale }]}>{t("Look carefully for 10 seconds.") || "Look carefully for 10 seconds."}</Text>
           
           <View style={{ flexDirection: 'row', justifyContent: 'space-around', width: '100%', marginBottom: 60 }}>
             {scenario.objects.map((obj, i) => (
@@ -251,7 +249,7 @@ const AdaptiveGame = ({ onComplete }) => {
           </View>
           
           <Button onPress={() => setStep(1)} style={{ width: '100%', paddingVertical: 20, borderRadius: 30 }} variant="accent">
-            <Text style={{ fontSize: 18 * fontScale, fontWeight: '800', color: '#ffffff' }}>I Remember</Text>
+            <Text style={{ fontSize: 18 * fontScale, fontWeight: '800', color: '#ffffff' }}>{t("I Remember") || "I Remember"}</Text>
           </Button>
         </>
       )}
@@ -305,7 +303,7 @@ const LanguageGame = ({ data, onComplete }) => {
 
   return (
     <View style={{ width: '100%', alignItems: 'center' }}>
-      <Text style={{ fontSize: 64, marginBottom: 24 }}>💬</Text>
+      <Text style={{ fontSize: 64, marginBottom: 24 }}>{t("💬") || "💬"}</Text>
       
       <Card style={{ padding: 24, width: '100%', backgroundColor: '#fffbeb', borderColor: '#fef3c7', borderWidth: 2, marginBottom: 16 }}>
         <Text style={{ fontSize: 24, fontWeight: '800', color: colors.textMain, textAlign: 'center' }}>
@@ -379,7 +377,7 @@ export const ActivityScreen = () => {
         </>
       ) : (
         <View style={{ alignItems: 'center' }}>
-          <Text style={{ fontSize: 80 * fontScale, marginBottom: 24 }}>🎉</Text>
+          <Text style={{ fontSize: 80 * fontScale, marginBottom: 24 }}>{t("🎉") || "🎉"}</Text>
           <Text style={[globalStyles.headerText, { textAlign: 'center', color: themeColors.success }]}>{t('greatJob')}</Text>
           <Text style={[globalStyles.text, { textAlign: 'center', marginTop: 12, marginBottom: 40, fontSize: 18 * fontScale }]}>
             {t('successCompleted')} {t(gameTitle) || gameTitle}.

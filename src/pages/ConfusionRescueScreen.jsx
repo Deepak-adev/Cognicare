@@ -8,6 +8,7 @@ import { useStore } from '../store/useStore';
 import { useTheme } from '../hooks/useTheme';
 
 export const ConfusionRescueScreen = () => {
+  const { t } = useTheme();
   const navigation = useNavigation();
   const { patient, timelineTasks, triggerRescueProtocol } = useStore();
   const { fontScale } = useTheme();
@@ -91,8 +92,8 @@ export const ConfusionRescueScreen = () => {
       {/* 1. Reassurance Header */}
       <View style={styles.header}>
         <HeartHandshake color={colors.success} size={48} style={{ marginBottom: 12 }} />
-        <Text style={[styles.title, { fontSize: 32 * fontScale }]}>You are safe.</Text>
-        <Text style={[styles.subtitle, { fontSize: 20 * fontScale }]}>You are at home.</Text>
+        <Text style={[styles.title, { fontSize: 32 * fontScale }]}>{t("You are safe.") || "You are safe."}</Text>
+        <Text style={[styles.subtitle, { fontSize: 20 * fontScale }]}>{t("You are at home.") || "You are at home."}</Text>
       </View>
 
       {/* 2. Visual Breathing Exercise */}
@@ -134,7 +135,7 @@ export const ConfusionRescueScreen = () => {
         }}
         style={styles.okBtn}
       >
-        <Text style={styles.okBtnText}>I'M OKAY NOW</Text>
+        <Text style={styles.okBtnText}>{t("I'M OKAY NOW") || "I'M OKAY NOW"}</Text>
       </Button>
 
     </View>

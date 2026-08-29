@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Animated } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
 import { globalStyles, colors, Button } from '../components/common';
 import { useStore } from '../store/useStore';
 import { ChevronLeft, Mic, CheckCircle } from 'lucide-react-native';
 
 export const VerbalFluencyTestScreen = () => {
+  const { t } = useTheme();
   const navigation = useNavigation();
   const { patient, saveClinicalTest } = useStore();
   
@@ -100,12 +102,10 @@ export const VerbalFluencyTestScreen = () => {
     return (
       <View style={[globalStyles.container, styles.center]}>
         <CheckCircle color={colors.success} size={80} style={{ marginBottom: 20 }} />
-        <Text style={[globalStyles.headerText, { textAlign: 'center', marginBottom: 12 }]}>Test Completed</Text>
-        <Text style={{ fontSize: 18, color: colors.textMuted, textAlign: 'center', marginBottom: 40, paddingHorizontal: 20 }}>
-          Your fluency score and transcript have been securely saved for clinical review.
-        </Text>
+        <Text style={[globalStyles.headerText, { textAlign: 'center', marginBottom: 12 }]}>{t("Test Completed") || "Test Completed"}</Text>
+        <Text style={{ fontSize: 18, color: colors.textMuted, textAlign: 'center', marginBottom: 40, paddingHorizontal: 20 }}>{t("Your fluency score and transcript have been securely saved for clinical review.") || "Your fluency score and transcript have been securely saved for clinical review."}</Text>
         <Button onPress={() => navigation.goBack()} style={{ width: '100%' }}>
-          <Text style={styles.btnText}>Return to Activities</Text>
+          <Text style={styles.btnText}>{t("Return to Activities") || "Return to Activities"}</Text>
         </Button>
       </View>
     );
@@ -117,13 +117,11 @@ export const VerbalFluencyTestScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <ChevronLeft color={colors.textMain} size={32} />
         </TouchableOpacity>
-        <Text style={[globalStyles.headerText, { flex: 1, textAlign: 'center', marginRight: 48 }]}>
-          Fluency Test
-        </Text>
+        <Text style={[globalStyles.headerText, { flex: 1, textAlign: 'center', marginRight: 48 }]}>{t("Fluency Test") || "Fluency Test"}</Text>
       </View>
 
       <Text style={styles.instruction}>
-        Name as many <Text style={{ color: colors.primary, fontWeight: '900' }}>ANIMALS</Text> as you can in 60 seconds.
+        {t("Name as many ") || "Name as many "}<Text style={{ color: colors.primary, fontWeight: '900' }}>{t("ANIMALS") || "ANIMALS"}</Text>{t(" as you can in 60 seconds.") || " as you can in 60 seconds."}
       </Text>
 
       <View style={styles.timerContainer}>
@@ -145,14 +143,12 @@ export const VerbalFluencyTestScreen = () => {
       </View>
 
       {!isTestActive && timeLeft === 60 && (
-        <Text style={{ textAlign: 'center', fontSize: 18, color: colors.textMuted, marginTop: 20 }}>
-          Tap the microphone to begin.
-        </Text>
+        <Text style={{ textAlign: 'center', fontSize: 18, color: colors.textMuted, marginTop: 20 }}>{t("Tap the microphone to begin.") || "Tap the microphone to begin."}</Text>
       )}
 
       {isTestActive && (
         <View style={styles.transcriptContainer}>
-          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textMain, marginBottom: 12 }}>Recognized words:</Text>
+          <Text style={{ fontSize: 18, fontWeight: '700', color: colors.textMain, marginBottom: 12 }}>{t("Recognized words:") || "Recognized words:"}</Text>
           <ScrollView style={styles.transcriptBox}>
             <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
               {transcribedWords.map((word, idx) => (
@@ -163,7 +159,7 @@ export const VerbalFluencyTestScreen = () => {
             </View>
           </ScrollView>
           <TouchableOpacity onPress={handleFastForward} style={{ marginTop: 20, padding: 12, backgroundColor: colors.bgSubtle, borderRadius: 12 }}>
-             <Text style={{ textAlign: 'center', color: colors.textMuted, fontWeight: '700' }}>Demo: Fast Forward 60s</Text>
+             <Text style={{ textAlign: 'center', color: colors.textMuted, fontWeight: '700' }}>{t("Demo: Fast Forward 60s") || "Demo: Fast Forward 60s"}</Text>
           </TouchableOpacity>
         </View>
       )}

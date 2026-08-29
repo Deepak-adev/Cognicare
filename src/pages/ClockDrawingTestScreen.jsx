@@ -1,5 +1,6 @@
 import React, { useState, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 import { useNavigation } from '@react-navigation/native';
 import Svg, { Path } from 'react-native-svg';
 import { globalStyles, colors, Button } from '../components/common';
@@ -7,6 +8,7 @@ import { useStore } from '../store/useStore';
 import { ChevronLeft, PenTool, CheckCircle } from 'lucide-react-native';
 
 export const ClockDrawingTestScreen = () => {
+  const { t } = useTheme();
   const navigation = useNavigation();
   const { patient, saveClinicalTest } = useStore();
   
@@ -137,12 +139,10 @@ export const ClockDrawingTestScreen = () => {
     return (
       <View style={[globalStyles.container, styles.center]}>
         <CheckCircle color={colors.success} size={80} style={{ marginBottom: 20 }} />
-        <Text style={[globalStyles.headerText, { textAlign: 'center', marginBottom: 12 }]}>Test Completed</Text>
-        <Text style={{ fontSize: 18, color: colors.textMuted, textAlign: 'center', marginBottom: 40, paddingHorizontal: 20 }}>
-          Your drawing and digital biomarkers have been securely saved for clinical review.
-        </Text>
+        <Text style={[globalStyles.headerText, { textAlign: 'center', marginBottom: 12 }]}>{t("Test Completed") || "Test Completed"}</Text>
+        <Text style={{ fontSize: 18, color: colors.textMuted, textAlign: 'center', marginBottom: 40, paddingHorizontal: 20 }}>{t("Your drawing and digital biomarkers have been securely saved for clinical review.") || "Your drawing and digital biomarkers have been securely saved for clinical review."}</Text>
         <Button onPress={() => navigation.goBack()} style={{ width: '100%' }}>
-          <Text style={styles.btnText}>Return to Activities</Text>
+          <Text style={styles.btnText}>{t("Return to Activities") || "Return to Activities"}</Text>
         </Button>
       </View>
     );
@@ -154,14 +154,10 @@ export const ClockDrawingTestScreen = () => {
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backBtn}>
           <ChevronLeft color={colors.textMain} size={32} />
         </TouchableOpacity>
-        <Text style={[globalStyles.headerText, { flex: 1, textAlign: 'center', marginRight: 48 }]}>
-          Clock Test
-        </Text>
+        <Text style={[globalStyles.headerText, { flex: 1, textAlign: 'center', marginRight: 48 }]}>{t("Clock Test") || "Clock Test"}</Text>
       </View>
 
-      <Text style={styles.instruction}>
-        Please draw a clock face, put in all the numbers, and set the time to 11:10.
-      </Text>
+      <Text style={styles.instruction}>{t("Please draw a clock face, put in all the numbers, and set the time to 11:10.") || "Please draw a clock face, put in all the numbers, and set the time to 11:10."}</Text>
 
       <View 
         ref={viewRef}
@@ -183,14 +179,14 @@ export const ClockDrawingTestScreen = () => {
         {paths.length === 0 && !currentPath && (
           <View style={styles.placeholder}>
             <PenTool color={colors.textMuted} size={40} style={{ opacity: 0.5, marginBottom: 8 }} />
-            <Text style={{ color: colors.textMuted, fontSize: 16 }}>Draw here using your finger</Text>
+            <Text style={{ color: colors.textMuted, fontSize: 16 }}>{t("Draw here using your finger") || "Draw here using your finger"}</Text>
           </View>
         )}
       </View>
 
       <View style={styles.actions}>
         <TouchableOpacity onPress={handleClear} style={[styles.actionBtn, { backgroundColor: colors.bgSubtle }]}>
-          <Text style={{ color: colors.textMain, fontWeight: '700', fontSize: 18 }}>Clear</Text>
+          <Text style={{ color: colors.textMain, fontWeight: '700', fontSize: 18 }}>{t("Clear") || "Clear"}</Text>
         </TouchableOpacity>
         
         <TouchableOpacity 
@@ -198,7 +194,7 @@ export const ClockDrawingTestScreen = () => {
           style={[styles.actionBtn, { backgroundColor: colors.primary, flex: 2, marginLeft: 16 }]}
           disabled={paths.length === 0}
         >
-          <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 18 }}>I'm Finished</Text>
+          <Text style={{ color: '#ffffff', fontWeight: '800', fontSize: 18 }}>{t("I'm Finished") || "I'm Finished"}</Text>
         </TouchableOpacity>
       </View>
     </View>

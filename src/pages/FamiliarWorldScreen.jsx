@@ -10,7 +10,6 @@ import { reminiscenceService } from '../services/reminiscenceService';
 export const FamiliarWorldScreen = () => {
   const { patient } = useStore();
   const { t, fontScale, colors, globalStyles } = useTheme();
-
   const [selectedMemory, setSelectedMemory] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
 
@@ -63,9 +62,7 @@ export const FamiliarWorldScreen = () => {
           <Text style={[globalStyles.headerText, { color: colors.primaryDark || '#1e3a8a', textAlign: 'center', fontSize: 36 * fontScale }]}>
             {t('myWorld') || 'Personal World'}
           </Text>
-          <Text style={[globalStyles.textMuted, { textAlign: 'center', fontSize: 18 * fontScale, marginTop: 12, paddingHorizontal: 20, lineHeight: 26 }]}>
-            A culturally aware memory system, curated by your family.
-          </Text>
+          <Text style={[globalStyles.textMuted, { textAlign: 'center', fontSize: 18 * fontScale, marginTop: 12, paddingHorizontal: 20, lineHeight: 26 }]}>{t("A culturally aware memory system, curated by your family.") || "A culturally aware memory system, curated by your family."}</Text>
         </View>
 
         <View style={styles.grid}>
@@ -123,12 +120,12 @@ export const FamiliarWorldScreen = () => {
             {selectedMemory?.voiceMessage ? (
               <TouchableOpacity style={[styles.micBtn, { backgroundColor: colors.accent, shadowColor: colors.accent }]} onPress={playVoiceMessage}>
                 <PlayCircle color="#ffffff" size={32} />
-                <Text style={{ color: '#ffffff', fontSize: 20 * fontScale, fontWeight: '800', marginLeft: 12 }}>Listen to Message</Text>
+                <Text style={{ color: '#ffffff', fontSize: 20 * fontScale, fontWeight: '800', marginLeft: 12 }}>{t("Listen to Message") || "Listen to Message"}</Text>
               </TouchableOpacity>
             ) : (
               <TouchableOpacity style={styles.micBtn}>
                 <Mic color="#ffffff" size={32} />
-                <Text style={{ color: '#ffffff', fontSize: 20 * fontScale, fontWeight: '800', marginLeft: 12 }}>Hold to Reply</Text>
+                <Text style={{ color: '#ffffff', fontSize: 20 * fontScale, fontWeight: '800', marginLeft: 12 }}>{t("Hold to Reply") || "Hold to Reply"}</Text>
               </TouchableOpacity>
             )}
           </View>

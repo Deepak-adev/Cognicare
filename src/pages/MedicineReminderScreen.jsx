@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-nati
 import { useNavigation } from '@react-navigation/native';
 import { globalStyles, colors, Card, Button } from '../components/common';
 import { useStore } from '../store/useStore';
+import { useTheme } from '../hooks/useTheme';
 import { CheckCircle2, Clock, Pill, ChevronLeft, Droplet } from 'lucide-react-native';
 
 export const MedicineReminderScreen = () => {
@@ -10,6 +11,7 @@ export const MedicineReminderScreen = () => {
   
   // Use global state so Caregiver can monitor in real-time
   const { medications, markMedicationTaken, waterIntake, waterGoal, logWaterIntake } = useStore();
+  const { t } = useTheme();
 
   return (
     <View style={globalStyles.container}>
@@ -18,7 +20,7 @@ export const MedicineReminderScreen = () => {
           <ChevronLeft color={colors.textMain} size={32} />
         </TouchableOpacity>
         <Text style={[globalStyles.headerText, { flex: 1, textAlign: 'center', marginRight: 48 }]}>
-          TODAY ☀️
+          {t('TODAY ☀️') || 'TODAY ☀️'}
         </Text>
       </View>
       
@@ -29,8 +31,8 @@ export const MedicineReminderScreen = () => {
               <Droplet color="#0284c7" size={28} />
             </View>
             <View style={{ flex: 1 }}>
-              <Text style={{ fontSize: 22, fontWeight: '800', color: '#0369a1' }}>Water Intake</Text>
-              <Text style={{ fontSize: 16, fontWeight: '600', color: '#0ea5e9' }}>{waterIntake} / {waterGoal} glasses today</Text>
+              <Text style={{ fontSize: 22, fontWeight: '800', color: '#0369a1' }}>{t('Water Intake') || 'Water Intake'}</Text>
+              <Text style={{ fontSize: 16, fontWeight: '600', color: '#0ea5e9' }}>{waterIntake} / {waterGoal} {t('glasses today') || 'glasses today'}</Text>
             </View>
           </View>
           
@@ -42,7 +44,7 @@ export const MedicineReminderScreen = () => {
           >
             <Droplet color="#ffffff" size={24} style={{ marginRight: 8 }} />
             <Text style={styles.actionBtnText}>
-              {waterIntake >= waterGoal ? 'GOAL MET! 🎉' : 'I DRANK WATER'}
+              {waterIntake >= waterGoal ? (t('GOAL MET! 🎉') || 'GOAL MET! 🎉') : (t('I DRANK WATER') || 'I DRANK WATER')}
             </Text>
           </TouchableOpacity>
         </Card>
@@ -66,12 +68,12 @@ export const MedicineReminderScreen = () => {
                     {med.taken ? (
                       <View style={[styles.statusBadge, styles.statusTaken]}>
                         <CheckCircle2 color={colors.success} size={18} />
-                        <Text style={styles.statusTextTaken}>✓ Taken</Text>
+                        <Text style={styles.statusTextTaken}>✓ {t('Taken') || 'Taken'}</Text>
                       </View>
                     ) : (
                       <View style={[styles.statusBadge, styles.statusUpcoming]}>
                         <Clock color={colors.accent} size={18} />
-                        <Text style={styles.statusTextUpcoming}>⏳ Upcoming</Text>
+                        <Text style={styles.statusTextUpcoming}>⏳ {t('Upcoming') || 'Upcoming'}</Text>
                       </View>
                     )}
                   </View>
@@ -81,7 +83,7 @@ export const MedicineReminderScreen = () => {
                   <View style={[styles.iconBox, med.taken && { backgroundColor: colors.success + '20' }]}>
                     <Pill color={med.taken ? colors.success : colors.primary} size={28} />
                   </View>
-                  <Text style={[styles.medName, med.taken && styles.medNameTaken]}>{med.name}</Text>
+                  <Text style={[styles.medName, med.taken && styles.medNameTaken]}>{t(med.name) || med.name}</Text>
                 </View>
                 
                 {/* Big Action Button for Upcoming */}
@@ -92,7 +94,7 @@ export const MedicineReminderScreen = () => {
                     activeOpacity={0.8}
                   >
                     <CheckCircle2 color="#ffffff" size={24} style={{ marginRight: 8 }} />
-                    <Text style={styles.actionBtnText}>I TOOK IT</Text>
+                    <Text style={styles.actionBtnText}>{t('I TOOK IT') || 'I TOOK IT'}</Text>
                   </TouchableOpacity>
                 )}
               </Card>

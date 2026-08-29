@@ -1,10 +1,12 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 import { globalStyles, colors, Button } from '../components/common';
 import { useNavigation } from '@react-navigation/native';
 import { HeartPulse, LayoutDashboard } from 'lucide-react-native';
 
 export const RoleSelectionScreen = () => {
+  const { t } = useTheme();
   const navigation = useNavigation();
 
   return (
@@ -15,10 +17,8 @@ export const RoleSelectionScreen = () => {
           style={{ width: 140, height: 140, marginBottom: 16 }} 
           resizeMode="contain"
         />
-        <Text style={[globalStyles.headerText, { textAlign: 'center', color: colors.textMain }]}>CogniCare</Text>
-        <Text style={{ fontSize: 18, color: colors.textMuted, textAlign: 'center', marginTop: 8 }}>
-          Who is using the app right now?
-        </Text>
+        <Text style={[globalStyles.headerText, { textAlign: 'center', color: colors.textMain }]}>{t("CogniCare") || "CogniCare"}</Text>
+        <Text style={{ fontSize: 18, color: colors.textMuted, textAlign: 'center', marginTop: 8 }}>{t("Who is using the app right now?") || "Who is using the app right now?"}</Text>
       </View>
 
       <TouchableOpacity 
@@ -30,8 +30,8 @@ export const RoleSelectionScreen = () => {
           <LayoutDashboard color={colors.primary} size={32} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.roleTitle}>I am a Patient</Text>
-          <Text style={styles.roleDesc}>Access my daily journey and activities.</Text>
+          <Text style={styles.roleTitle}>{t("I am a Patient") || "I am a Patient"}</Text>
+          <Text style={styles.roleDesc}>{t("Access my daily journey and activities.") || "Access my daily journey and activities."}</Text>
         </View>
       </TouchableOpacity>
 
@@ -44,8 +44,8 @@ export const RoleSelectionScreen = () => {
           <HeartPulse color={colors.success} size={32} />
         </View>
         <View style={{ flex: 1 }}>
-          <Text style={styles.roleTitle}>I am a Caregiver</Text>
-          <Text style={styles.roleDesc}>Manage patients and view insights.</Text>
+          <Text style={styles.roleTitle}>{t("I am a Caregiver") || "I am a Caregiver"}</Text>
+          <Text style={styles.roleDesc}>{t("Manage patients and view insights.") || "Manage patients and view insights."}</Text>
         </View>
       </TouchableOpacity>
     </View>

@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Animated, TextInput, Keyboard } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 import { globalStyles, colors } from '../components/common';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { useStore } from '../store/useStore';
@@ -9,6 +10,7 @@ import { Audio } from 'expo-av';
 import { GroqService } from '../services/GroqService';
 
 export const VoiceOnboardingScreen = () => {
+  const { t } = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
   const { saveOnboardedPatient, loadPatientData } = useStore();
@@ -206,9 +208,7 @@ export const VoiceOnboardingScreen = () => {
         <Text style={{ fontSize: 26, fontWeight: '900', color: colors.textMain, textAlign: 'center' }}>
           Let's talk, {initialName}
         </Text>
-        <Text style={{ fontSize: 16, color: colors.textMuted, marginTop: 8, textAlign: 'center', paddingHorizontal: 20 }}>
-          Just speak naturally. I am here to listen to your life journey.
-        </Text>
+        <Text style={{ fontSize: 16, color: colors.textMuted, marginTop: 8, textAlign: 'center', paddingHorizontal: 20 }}>{t("Just speak naturally. I am here to listen to your life journey.") || "Just speak naturally. I am here to listen to your life journey."}</Text>
       </View>
 
       {/* Language Selector */}
@@ -241,17 +241,11 @@ export const VoiceOnboardingScreen = () => {
         <View style={{ backgroundColor: '#ffffff', padding: 32, borderRadius: 32, width: '100%', shadowColor: '#000', shadowOffset: { width: 0, height: 10 }, shadowOpacity: 0.1, shadowRadius: 20, elevation: 10, alignItems: 'center' }}>
           
           {isSpeaking ? (
-            <Text style={{ fontSize: 14, fontWeight: '800', color: '#d946ef', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>
-              🤖 AI Companion is speaking...
-            </Text>
+            <Text style={{ fontSize: 14, fontWeight: '800', color: '#d946ef', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>{t("🤖 AI Companion is speaking...") || "🤖 AI Companion is speaking..."}</Text>
           ) : isListening ? (
-            <Text style={{ fontSize: 14, fontWeight: '800', color: '#ef4444', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>
-              🎙️ Listening to your story...
-            </Text>
+            <Text style={{ fontSize: 14, fontWeight: '800', color: '#ef4444', textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>{t("🎙️ Listening to your story...") || "🎙️ Listening to your story..."}</Text>
           ) : (
-            <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>
-              Thinking...
-            </Text>
+            <Text style={{ fontSize: 14, fontWeight: '800', color: colors.textMuted, textTransform: 'uppercase', letterSpacing: 2, marginBottom: 16 }}>{t("Thinking...") || "Thinking..."}</Text>
           )}
 
           <Text style={{ fontSize: 22, fontWeight: '800', color: colors.textMain, textAlign: 'center', lineHeight: 32, marginBottom: 30 }}>

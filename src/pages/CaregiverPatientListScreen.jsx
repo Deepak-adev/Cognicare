@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { useTheme } from '../hooks/useTheme';
 import { globalStyles, colors, Button } from '../components/common';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { db } from '../db/db';
@@ -7,6 +8,7 @@ import { useStore } from '../store/useStore';
 import { Plus, User, Trash2 } from 'lucide-react-native';
 
 export const CaregiverPatientListScreen = () => {
+  const { t } = useTheme();
   const navigation = useNavigation();
   const route = useRoute();
   const { loadPatientData } = useStore();
@@ -32,19 +34,17 @@ export const CaregiverPatientListScreen = () => {
   return (
     <View style={[globalStyles.container, { backgroundColor: '#f8fafc' }]}>
       <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginTop: 40, marginBottom: 8 }}>
-        <Text style={[globalStyles.headerText, { marginTop: 0 }]}>My Patients</Text>
+        <Text style={[globalStyles.headerText, { marginTop: 0 }]}>{t("My Patients") || "My Patients"}</Text>
         <TouchableOpacity onPress={() => navigation.reset({ index: 0, routes: [{ name: 'RoleSelection' }] })}>
-          <Text style={{ fontSize: 16, color: colors.danger, fontWeight: '700' }}>Exit</Text>
+          <Text style={{ fontSize: 16, color: colors.danger, fontWeight: '700' }}>{t("Exit") || "Exit"}</Text>
         </TouchableOpacity>
       </View>
-      <Text style={[globalStyles.textMuted, { marginBottom: 24 }]}>Select a patient to manage their care journey.</Text>
+      <Text style={[globalStyles.textMuted, { marginBottom: 24 }]}>{t("Select a patient to manage their care journey.") || "Select a patient to manage their care journey."}</Text>
 
       <ScrollView showsVerticalScrollIndicator={false}>
         {patients.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={{ fontSize: 18, color: colors.textMuted, textAlign: 'center', marginBottom: 24 }}>
-              You haven't added any patients yet.
-            </Text>
+            <Text style={{ fontSize: 18, color: colors.textMuted, textAlign: 'center', marginBottom: 24 }}>{t("You haven't added any patients yet.") || "You haven't added any patients yet."}</Text>
           </View>
         ) : (
           patients.map((p, idx) => (
