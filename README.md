@@ -1,4 +1,4 @@
-# 🧠 NeuroCare AI
+# 🧠 Cognicare AI
 
 > **Voice-First AI Cognitive Assistance & Remote Monitoring Platform for Alzheimer's & Dementia Patients**  
 > *Developed for Smart India Hackathon (SIH)*
@@ -7,7 +7,7 @@
 
 ## 📌 Overview
 
-**NeuroCare AI** is an assistive healthcare platform designed to bridge the gap between cognitive care patients (Alzheimer's / Dementia) and their caregivers. By replacing complex user interfaces with intuitive voice interaction, biometrics, and personalized reminiscence modules, NeuroCare AI empowers patients to maintain independence while providing caregivers with real-time analytics and peace of mind.
+**Cognicare AI** is an assistive healthcare platform designed to bridge the gap between cognitive care patients (Alzheimer's / Dementia) and their caregivers. By replacing complex user interfaces with intuitive voice interaction, biometrics, and personalized reminiscence modules, NeuroCare AI empowers patients to maintain independence while providing caregivers with real-time analytics and peace of mind.
 
 The app is built with a single codebase that serves two entirely different user experiences based on the selected role:
 - **Patient Interface:** Highly simplified, high-contrast, accessible UI with large tap targets and zero typing required.
